@@ -11,13 +11,13 @@
             <RowDefinition Height="6*" />
         </Grid.RowDefinitions>
 
-        <Image Source="photo.png"
+        <Image Source="room7.jpg"
                Aspect="AspectFill"
                Grid.RowSpan="2"
                VerticalOptions="Fill"
                HorizontalOptions="Fill"/>
 
-        <BoxView Color="#FF69B4"
+        <BoxView Color="white"
                  Opacity="0.2"
                  Grid.RowSpan="2"/>
 
@@ -26,8 +26,8 @@
                FontSize="200" 
                HorizontalOptions="Center"
                VerticalOptions="Center" 
-               TextColor="#B76E79"
-               Opacity="0.7">
+               TextColor="#FFFFFFFF"
+               Opacity="0.8">
             <Label.Shadow>
                 <Shadow Brush="Black" Offset="0,4" Opacity="0.25" Radius="10"/>
             </Label.Shadow>

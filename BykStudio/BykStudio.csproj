@@ -83,6 +83,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\BykStudio.data\BykStudio.data.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
 	  <MauiXaml Update="MainPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
