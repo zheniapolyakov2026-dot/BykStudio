@@ -1,6 +1,8 @@
 using System.Text;
 using BykStudio.data;
+using BykStudio.data.Interfaces;
 using BykStudio.data.Models;
+using BykStudio.data.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -47,6 +49,8 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<ILoyaltyService, LoyaltyService>();
+builder.Services.AddHttpClient<ITinkoffPaymentService, TinkoffPaymentService>();
 
 var app = builder.Build();
 

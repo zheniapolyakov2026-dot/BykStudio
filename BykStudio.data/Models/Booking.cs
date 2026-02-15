@@ -31,6 +31,14 @@ namespace BykStudio.data.Models
         public Room Room { get; set; } = null!;
 
         public Payment? Payment { get; set; }
+
+        // Guest information (if user not registered)
+        public string? GuestName { get; set; }
+        public string? GuestEmail { get; set; }
+        public string? GuestPhone { get; set; }
+
+        // Track if booking was created by guest
+        public bool IsGuestBooking { get; set; }
     }
 
     public enum BookingStatus

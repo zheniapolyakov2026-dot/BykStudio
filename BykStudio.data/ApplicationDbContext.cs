@@ -15,6 +15,7 @@ namespace BykStudio.data
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<Payment> Payments { get; set; }
         public DbSet<LoyaltyPoints> LoyaltyPoints { get; set; }
+        public DbSet<LoyaltyTransaction> LoyaltyTransactions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -61,6 +62,20 @@ namespace BykStudio.data
             modelBuilder.Entity<Payment>()
                 .Property(p => p.Amount)
                 .HasPrecision(18, 2);
+
+            // Configure one-to-many: User -> Transactions
+            modelBuilder.Entity<LoyaltyTransaction>()
+                .HasOne(t => t.User)
+                .WithMany()
+                .HasForeignKey(t => t.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Configure indexes for performance
+            modelBuilder.Entity<LoyaltyTransaction>()
+                .HasIndex(t => t.UserId);
+
+            modelBuilder.Entity<LoyaltyTransaction>()
+                .HasIndex(t => t.CreatedAt);
         }
 
     }
