@@ -3,4 +3,7 @@
   <Project Path="BykStudio/BykStudio.csproj">
     <Deploy Solution="Debug|*" />
   </Project>
+  <Project Path="BykStudio.API/BykStudio.API.csproj" Id="54576f79-d5c0-4fde-ae61-1d178acc989d" />
+  <Project Path="BykStudio.data/BykStudio.data.csproj" />
+  <Project Path="BykStudio/BykStudio.csproj" Id="c1f58f30-23ac-4d47-b444-1f9c56bf5eae" />
 </Solution>
