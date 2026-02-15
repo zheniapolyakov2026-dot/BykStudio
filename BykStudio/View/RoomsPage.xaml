@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="BykStudio.View.RoomsPage"
+             Title="Наши залы"
+             BackgroundColor="#FFF5F7">
+    <Grid>
+        <CollectionView x:Name="RoomsCollectionView" ItemsLayout="VerticalList" SelectionMode="None" Margin="15">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border StrokeShape="RoundRectangle 25" StrokeThickness="0" BackgroundColor="White" Margin="0,10" HeightRequest="450">
+                        <Border.Shadow>
+                            <Shadow Brush="#FFC1CC" Offset="0,10" Opacity="0.3" Radius="15"/>
+                        </Border.Shadow>
+
+                        <Grid RowDefinitions="220, Auto, *">
+                            <Image Source="{Binding MainImageUrl}" Aspect="AspectFill" Grid.Row="0"/>
+
+                            <VerticalStackLayout Grid.Row="1" Padding="15" Spacing="4">
+                                <Label Text="{Binding Name}" FontSize="24" FontAttributes="Bold" TextColor="#333333"/>
+                                <Label Text="{Binding PricePerHour, StringFormat='{0:C0}/час'}" FontSize="18" TextColor="#FF69B4" FontAttributes="Bold"/>
+                                <Label Text="{Binding Description}" FontSize="14" TextColor="#666666" LineBreakMode="WordWrap"/>
+                            </VerticalStackLayout>
+
+                            <Grid Grid.Row="2" ColumnDefinitions="*, *" ColumnSpacing="12" Padding="15,0,15,15" VerticalOptions="End">
+                                <Button Grid.Column="0" Text="просмотр" 
+                                        Clicked="OnViewPhotosClicked"
+                                        BackgroundColor="#FFF0F5" TextColor="#C71585" 
+                                        BorderColor="#C71585" BorderWidth="1" CornerRadius="15" HeightRequest="50"/>
+
+                                <Button Grid.Column="1" Text="забронировать" 
+                                        Clicked="OnBookClicked"
+                                        BackgroundColor="#C71585" TextColor="White" 
+                                        CornerRadius="15" HeightRequest="50"/>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Grid x:Name="GalleryOverlay" IsVisible="False" BackgroundColor="#F2000000">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <CarouselView x:Name="ImageCarousel">
+                <CarouselView.ItemTemplate>
+                    <DataTemplate>
+                        <Image Source="{Binding .}" Aspect="AspectFit" Margin="20"/>
+                    </DataTemplate>
+                </CarouselView.ItemTemplate>
+            </CarouselView>
+
+            <IndicatorView x:Name="ImageIndicator" Grid.Row="1"
+                           HorizontalOptions="Center" Margin="0,0,0,30"
+                           IndicatorColor="#FFB6C1" SelectedIndicatorColor="#FF69B4" />
+
+            <Button Text="✕" Clicked="OnCloseGalleryClicked"
+                    BackgroundColor="#40FFFFFF" TextColor="White" 
+                    FontSize="20" WidthRequest="50" HeightRequest="50" CornerRadius="25"
+                    HorizontalOptions="End" VerticalOptions="Start" Margin="20,50"/>
+        </Grid>
+    </Grid>
+</ContentPage>

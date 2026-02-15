@@ -1,3 +1,6 @@
 <Solution>
-  <Project Path="BykStudio/BykStudio.csproj" />
+  <Project Path="BykStudio.data/BykStudio.data.csproj" />
+  <Project Path="BykStudio/BykStudio.csproj">
+    <Deploy Solution="Debug|*" />
+  </Project>
 </Solution>
