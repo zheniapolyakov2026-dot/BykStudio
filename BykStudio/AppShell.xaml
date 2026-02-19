@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<Shell
-    x:Class="BykStudio.AppShell"
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:BykStudio"
-    Title="BykStudio">
+<Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:local="clr-namespace:BykStudio"
+       xmlns:view="clr-namespace:BykStudio.View"
+       x:Class="BykStudio.AppShell">
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+    <!-- Регистрируем главную страницу как стартовую -->
+    <ShellContent Title="Главная" Route="main" ContentTemplate="{DataTemplate local:MainPage}" />
+
+    <!-- Регистрируем страницу комнат по маршруту "rooms" -->
+    <ShellContent Route="rooms" ContentTemplate="{DataTemplate view:RoomsPage}" />
 
 </Shell>

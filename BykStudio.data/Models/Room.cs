@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-
 namespace BykStudio.data.Models
 {
     public class Room
@@ -19,8 +18,11 @@ namespace BykStudio.data.Models
         public int Capacity { get; set; }
 
         public bool IsAvailable { get; set; } = true;
+        public string MainImageUrl { get; set; } = string.Empty;
+        public List<string> Photos { get; set; } = new List<string>();
 
         // Navigation property
         public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+
     }
 }

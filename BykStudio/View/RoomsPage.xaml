@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="BykStudio.View.RoomsPage"
+             Padding="0"
+             Shell.NavBarIsVisible="False">
+
+    <Grid>
+        <Image Source="room7.jpg" 
+               Aspect="AspectFill"
+               VerticalOptions="Fill" 
+               HorizontalOptions="Fill"/>
+
+        <ScrollView>
+            <VerticalStackLayout Spacing="0">
+
+                <BoxView HeightRequest="220" Color="Transparent" />
+
+                <CollectionView x:Name="RoomsCollectionView" 
+                                SelectionMode="None" 
+                                HorizontalOptions="Center">
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Horizontal" ItemSpacing="110" />
+                    </CollectionView.ItemsLayout>
+
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Border StrokeShape="RoundRectangle 20" 
+                                    StrokeThickness="0" 
+                                    BackgroundColor="#80FFFFFF" 
+                                    WidthRequest="500" 
+                                    Margin="0,0,0,15">
+                                <Border.Shadow>
+                                    <Shadow Brush="Black" Offset="0,5" Opacity="0.1" Radius="10"/>
+                                </Border.Shadow>
+
+                                <VerticalStackLayout Padding="0" Spacing="0">
+                                    <Image Source="{Binding MainImageUrl}" 
+                                           HeightRequest="300" 
+                                           Aspect="AspectFill" />
+
+                                    <VerticalStackLayout Padding="15,10" Spacing="2">
+                                        <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" TextColor="#333333"/>
+                                        <Label Text="{Binding PricePerHour, StringFormat='{0:C0}/час'}" FontSize="15" TextColor="#FF69B4" FontAttributes="Bold"/>
+                                        <Label Text="{Binding Description}" FontSize="12" TextColor="#666666" MaxLines="2" LineBreakMode="TailTruncation"/>
+                                    </VerticalStackLayout>
+
+                                    <HorizontalStackLayout HorizontalOptions="Center" Spacing="10" Padding="0,0,0,15">
+                                        <Button Text="просмотр" 
+                                                Clicked="OnViewPhotosClicked"
+                                                FontSize="12" HeightRequest="38" WidthRequest="110"
+                                                BackgroundColor="Transparent" TextColor="#C71585" 
+                                                BorderColor="#C71585" BorderWidth="1" CornerRadius="19"/>
+
+                                        <Button Text="забронировать" 
+                                                Clicked="OnBookClicked"
+                                                FontSize="12" HeightRequest="38" WidthRequest="130"
+                                                BackgroundColor="#C71585" TextColor="White" 
+                                                CornerRadius="19"/>
+                                    </HorizontalStackLayout>
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <BoxView HeightRequest="50" Color="Transparent" />
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Grid x:Name="GalleryOverlay" IsVisible="False" BackgroundColor="Black">
+            <CarouselView x:Name="ImageCarousel" IndicatorView="ImageIndicator">
+                <CarouselView.ItemTemplate>
+                    <DataTemplate>
+                        <Image Source="{Binding .}" Aspect="AspectFit" />
+                    </DataTemplate>
+                </CarouselView.ItemTemplate>
+            </CarouselView>
+
+            <IndicatorView x:Name="ImageIndicator" 
+                           HorizontalOptions="Center"
+                           VerticalOptions="End" 
+                           Margin="0,0,0,40" 
+                           IndicatorColor="Gray" SelectedIndicatorColor="White" />
+
+            <Button Text="✕" Clicked="OnCloseGalleryClicked" 
+                    HorizontalOptions="End" VerticalOptions="Start" 
+                    Margin="20,50" BackgroundColor="#60000000" 
+                    TextColor="White" CornerRadius="25" WidthRequest="45" HeightRequest="45"/>
+        </Grid>
+    </Grid>
+</ContentPage>

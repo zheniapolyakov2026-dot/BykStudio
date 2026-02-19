@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Identity;
-
 namespace BykStudio.data.Models
 {
     public class ApplicationUser : IdentityUser
