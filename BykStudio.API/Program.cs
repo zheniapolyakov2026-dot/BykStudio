@@ -46,6 +46,19 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+var allowedOrigins = new[] { "https://your-website.com", "https://localhost:5001" }; // Blazor Server URLs
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("BlazorWeb", policy =>
+    {
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials(); // if using cookies
+    });
+});
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -64,7 +77,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseRouting();
 app.UseAuthentication();
+app.UseCors("BlazorWeb");
 app.UseAuthorization();
 app.MapControllers();
 
