@@ -1,0 +1,72 @@
+﻿@page "/rooms"
+@using BykStudio.data.Models
+@inject IJSRuntime JsRuntime
+
+<div class="rooms-page">
+    <div class="rooms-grid">
+        @foreach (var room in rooms)
+        {
+            <RoomCard Room="room"
+                      OnViewPhotos="HandleViewPhotos"
+                      OnBook="HandleBook" />
+        }
+    </div>
+</div>
+
+<!-- Галерея -->
+@if (ShowGallery && CurrentPhotos.Count > 0)
+{
+    <div class="gallery-overlay" @onclick="CloseGallery">
+        <div class="gallery-modal" @onclick:stopPropagation="true">
+            <button class="close-btn" @onclick="CloseGallery">✕</button>
+
+            <img src="@CurrentPhotos[CurrentPhotoIndex]" class="carousel-image" alt="Фото" />
+
+            <div class="carousel-controls">
+                <button class="nav-btn" @onclick="PrevPhoto">‹</button>
+                <span class="photo-counter">@(CurrentPhotoIndex + 1) / @CurrentPhotos.Count</span>
+                <button class="nav-btn" @onclick="NextPhoto">›</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Room> rooms = new();
+
+    private bool ShowGallery = false;
+    private List<string> CurrentPhotos = new();
+    private int CurrentPhotoIndex = 0;
+
+    protected override void OnInitialized()
+    {
+        rooms = new List<Room>
+        {
+            new Room { Name = "комната 1", PricePerHour = 2000m, Description = "описание.",
+                       MainImageUrl = "images/room1.jpg",
+                       Photos = new() { "images/room1.jpg", "images/room2.jpg", "images/room3.jpg", "images/room4.jpg" } },
+            new Room { Name = "комната 2", PricePerHour = 2000m, Description = "описание.",
+                       MainImageUrl = "images/room2.jpg",
+                       Photos = new() { "images/room7.jpg", "images/room5.jpg", "images/room6.jpg" } }
+        };
+    }
+
+    private void HandleViewPhotos(Room room)
+    {
+        if (room?.Photos?.Any() == true)
+        {
+            CurrentPhotos = room.Photos;
+            CurrentPhotoIndex = 0;
+            ShowGallery = true;
+        }
+    }
+
+    private async Task HandleBook(Room room)
+    {
+        await JsRuntime.InvokeVoidAsync("alert", $"Вы выбрали {room.Name}");
+    }
+
+    private void CloseGallery() => ShowGallery = false;
+    private void NextPhoto() => CurrentPhotoIndex = (CurrentPhotoIndex + 1) % CurrentPhotos.Count;
+    private void PrevPhoto() => CurrentPhotoIndex = (CurrentPhotoIndex - 1 + CurrentPhotos.Count) % CurrentPhotos.Count;
+}
