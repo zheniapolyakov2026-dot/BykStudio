@@ -17,64 +17,64 @@ namespace BykStudio.data
         public DbSet<LoyaltyPoints> LoyaltyPoints { get; set; }
         public DbSet<LoyaltyTransaction> LoyaltyTransactions { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        protected override void OnModelCreating(ModelBuilder builder)
         {
-            base.OnModelCreating(modelBuilder);
+            base.OnModelCreating(builder);
 
             // Configure one-to-one between ApplicationUser and LoyaltyPoints
-            modelBuilder.Entity<ApplicationUser>()
+            builder.Entity<ApplicationUser>()
                 .HasOne(u => u.LoyaltyPoints)
                 .WithOne(lp => lp.User)
                 .HasForeignKey<LoyaltyPoints>(lp => lp.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Configure one-to-many: User -> Bookings
-            modelBuilder.Entity<ApplicationUser>()
+            builder.Entity<ApplicationUser>()
                 .HasMany(u => u.Bookings)
                 .WithOne(b => b.User)
                 .HasForeignKey(b => b.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Configure one-to-many: Room -> Bookings
-            modelBuilder.Entity<Room>()
+            builder.Entity<Room>()
                 .HasMany(r => r.Bookings)
                 .WithOne(b => b.Room)
                 .HasForeignKey(b => b.RoomId)
                 .OnDelete(DeleteBehavior.Restrict); // Prevent deleting room with bookings
 
             // Configure one-to-one: Booking -> Payment
-            modelBuilder.Entity<Booking>()
+            builder.Entity<Booking>()
                 .HasOne(b => b.Payment)
                 .WithOne(p => p.Booking)
                 .HasForeignKey<Payment>(p => p.BookingId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Add unique index to prevent overlapping bookings (optional)
-            modelBuilder.Entity<Booking>()
+            builder.Entity<Booking>()
                 .HasIndex(b => new { b.RoomId, b.StartTime, b.EndTime })
                 .IsUnique(); // This ensures no double-booking, but needs careful handling
 
             // Configure decimal precision for all money fields
-            modelBuilder.Entity<Booking>()
+            builder.Entity<Booking>()
                 .Property(b => b.TotalPrice)
                 .HasPrecision(18, 2);
 
-            modelBuilder.Entity<Payment>()
+            builder.Entity<Payment>()
                 .Property(p => p.Amount)
                 .HasPrecision(18, 2);
 
             // Configure one-to-many: User -> Transactions
-            modelBuilder.Entity<LoyaltyTransaction>()
+            builder.Entity<LoyaltyTransaction>()
                 .HasOne(t => t.User)
                 .WithMany()
                 .HasForeignKey(t => t.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Configure indexes for performance
-            modelBuilder.Entity<LoyaltyTransaction>()
+            builder.Entity<LoyaltyTransaction>()
                 .HasIndex(t => t.UserId);
 
-            modelBuilder.Entity<LoyaltyTransaction>()
+            builder.Entity<LoyaltyTransaction>()
                 .HasIndex(t => t.CreatedAt);
         }
 

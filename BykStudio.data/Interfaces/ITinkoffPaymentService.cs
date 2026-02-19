@@ -1,5 +1,5 @@
 ﻿using System.Text.Json;
-using BykStudio.data.Models;
+using BykStudio.data.DTOs;
 
 namespace BykStudio.data.Interfaces
 {

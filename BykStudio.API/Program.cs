@@ -51,6 +51,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<ILoyaltyService, LoyaltyService>();
 builder.Services.AddHttpClient<ITinkoffPaymentService, TinkoffPaymentService>();
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddTransient<IEmailSender, EmailSender>();
 
 var app = builder.Build();
 

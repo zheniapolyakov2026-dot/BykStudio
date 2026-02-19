@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using System.Text.Json;
+using BykStudio.data.DTOs;
 using BykStudio.data.Interfaces;
-using BykStudio.data.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
