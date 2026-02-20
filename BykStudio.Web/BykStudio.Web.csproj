@@ -8,16 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.0.3" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\BykStudio.data\BykStudio.data.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="wwwroot\images\" />
-	<Content Update="wwwroot\**\*" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

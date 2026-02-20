@@ -1,72 +1,83 @@
 ﻿@page "/rooms"
+@layout FullScreenLayout
 @using BykStudio.data.Models
-@inject IJSRuntime JsRuntime
+@inject IJSRuntime JS
+@inject NavigationManager NavigationManager
 
-<div class="rooms-page">
-    <div class="rooms-grid">
-        @foreach (var room in rooms)
-        {
-            <RoomCard Room="room"
-                      OnViewPhotos="HandleViewPhotos"
-                      OnBook="HandleBook" />
-        }
-    </div>
-</div>
+<div class="relative min-h-screen overflow-hidden">
+    <!-- Full-bleed background (exact MAUI style) -->
+    <img src="/images/room7.jpg"
+         class="absolute inset-0 w-full h-full object-cover"
+         alt="Studio" />
 
-<!-- Галерея -->
-@if (ShowGallery && CurrentPhotos.Count > 0)
-{
-    <div class="gallery-overlay" @onclick="CloseGallery">
-        <div class="gallery-modal" @onclick:stopPropagation="true">
-            <button class="close-btn" @onclick="CloseGallery">✕</button>
+    <!-- Subtle dark gradient overlay (makes text & cards pop) -->
+    <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60"></div>
 
-            <img src="@CurrentPhotos[CurrentPhotoIndex]" class="carousel-image" alt="Фото" />
+    <!-- Content -->
+    <div class="relative z-10 pt-24 pb-20 min-h-screen">
+        <div class="max-w-7xl mx-auto px-6">
+            <h2 class="text-white text-5xl font-bold text-center mb-12 drop-shadow-2xl tracking-tight">
+                Наши комнаты
+            </h2>
 
-            <div class="carousel-controls">
-                <button class="nav-btn" @onclick="PrevPhoto">‹</button>
-                <span class="photo-counter">@(CurrentPhotoIndex + 1) / @CurrentPhotos.Count</span>
-                <button class="nav-btn" @onclick="NextPhoto">›</button>
+            <!-- Horizontal scrollable cards -->
+            <div class="flex gap-8 overflow-x-auto pb-12 snap-x snap-mandatory scrollbar-hide">
+                @foreach (var room in RoomList)
+                {
+                    <div class="min-w-[480px] snap-center">
+                        <RoomCard Room="room"
+                                  OnViewPhotos="() => OpenGallery(room)"
+                                  OnBook="() => BookRoom(room)" />
+                    </div>
+                }
             </div>
         </div>
     </div>
-}
+
+    <!-- Gallery Modal -->
+    @if (ShowGallery)
+    {
+        <PhotoGallery Photos="CurrentPhotos" OnClose="CloseGallery" />
+    }
+</div>
 
 @code {
-    private List<Room> rooms = new();
+    private List<Room> RoomList { get; set; } = new();
 
     private bool ShowGallery = false;
     private List<string> CurrentPhotos = new();
-    private int CurrentPhotoIndex = 0;
 
     protected override void OnInitialized()
     {
-        rooms = new List<Room>
+        RoomList = new List<Room>
         {
-            new Room { Name = "комната 1", PricePerHour = 2000m, Description = "описание.",
-                       MainImageUrl = "images/room1.jpg",
-                       Photos = new() { "images/room1.jpg", "images/room2.jpg", "images/room3.jpg", "images/room4.jpg" } },
-            new Room { Name = "комната 2", PricePerHour = 2000m, Description = "описание.",
-                       MainImageUrl = "images/room2.jpg",
-                       Photos = new() { "images/room7.jpg", "images/room5.jpg", "images/room6.jpg" } }
+            new Room {
+                Name = "комната 1",
+                PricePerHour = 2000,
+                Description = "описание.",
+                MainImageUrl = "/images/room1.jpg",
+                Photos = new List<string> { "/images/room1.jpg", "/images/room2.jpg", "/images/room3.jpg", "/images/room4.jpg" }
+            },
+            new Room {
+                Name = "комната 2",
+                PricePerHour = 2000,
+                Description = "описание.",
+                MainImageUrl = "/images/room2.jpg",
+                Photos = new List<string> { "/images/room7.jpg", "/images/room5.jpg", "/images/room6.jpg" }
+            }
         };
     }
 
-    private void HandleViewPhotos(Room room)
+    private void OpenGallery(Room room)
     {
-        if (room?.Photos?.Any() == true)
-        {
-            CurrentPhotos = room.Photos;
-            CurrentPhotoIndex = 0;
-            ShowGallery = true;
-        }
-    }
-
-    private async Task HandleBook(Room room)
-    {
-        await JsRuntime.InvokeVoidAsync("alert", $"Вы выбрали {room.Name}");
+        CurrentPhotos = room.Photos;
+        ShowGallery = true;
     }
 
     private void CloseGallery() => ShowGallery = false;
-    private void NextPhoto() => CurrentPhotoIndex = (CurrentPhotoIndex + 1) % CurrentPhotos.Count;
-    private void PrevPhoto() => CurrentPhotoIndex = (CurrentPhotoIndex - 1 + CurrentPhotos.Count) % CurrentPhotos.Count;
+
+    private async Task BookRoom(Room room)
+    {
+        await JS.InvokeVoidAsync("alert", $"Вы выбрали {room.Name}");
+    }
 }

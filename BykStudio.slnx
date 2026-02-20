@@ -1,6 +1,8 @@
 <Solution>
   <Project Path="BykStudio.API/BykStudio.API.csproj" />
   <Project Path="BykStudio.data/BykStudio.data.csproj" />
-  <Project Path="BykStudio.Web/BykStudio.Web.csproj" Id="d70d555e-26d1-4bb5-9d19-24fd4ab84b15" />
-  <Project Path="BykStudio/BykStudio.csproj" Id="2c7af5ad-7dfb-4f30-8d58-86a5dea92eb0" />
+  <Project Path="BykStudio.Web/BykStudio.Web.csproj" Id="11c054e1-b938-4632-a409-299440f33617" />
+  <Project Path="BykStudio/BykStudio.csproj" Id="2c7af5ad-7dfb-4f30-8d58-86a5dea92eb0">
+    <Deploy Solution="Debug|*" />
+  </Project>
 </Solution>

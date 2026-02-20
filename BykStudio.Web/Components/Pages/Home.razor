@@ -1,0 +1,31 @@
+﻿@page "/"
+@layout FullScreenLayout
+@inject NavigationManager NavigationManager
+
+<div style="position: relative; height: 100vh; width: 100%; overflow: hidden;">
+    <!-- Full-screen background image (exact MAUI behavior) -->
+    <img src="/images/room7.jpg"
+         style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1;"
+         alt="Studio" />
+
+    <!-- White overlay (exactly like your BoxView Opacity="0.2") -->
+    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: white; opacity: 0.2; z-index: 2;"></div>
+
+    <!-- Content overlaid on top -->
+    <div style="position: relative; z-index: 3; height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 20px;">
+        <div>
+            <h1 style="color: #ffffff; font-size: clamp(80px, 13vw, 200px); font-weight: 900; letter-spacing: -8px; line-height: 1; margin: 0; text-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+                BykStudio
+            </h1>
+
+            <button @onclick="GoToRooms"
+                    style="margin-top: 50px; padding: 25px 80px; font-size: 28px; font-weight: 600; border: 4px solid white; color: white; border-radius: 50px; background: transparent; cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.3); transition: all 0.3s ease;">
+                забронировать
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private void GoToRooms() => NavigationManager.NavigateTo("/rooms");
+}

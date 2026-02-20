@@ -1,0 +1,32 @@
+﻿@using BykStudio.data.Models
+
+@code {
+    [Parameter] public Room Room { get; set; } = default!;
+    [Parameter] public EventCallback OnViewPhotos { get; set; }
+    [Parameter] public EventCallback OnBook { get; set; }
+}
+
+<div class="bg-white/80 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl border border-white/50"
+     style="width: 480px;">
+    <img src="@Room.MainImageUrl"
+         class="w-full h-[320px] object-cover" />
+
+    <div class="p-6">
+        <h3 class="text-2xl font-bold text-zinc-800">@Room.Name</h3>
+        <p class="text-[#C71585] text-xl font-semibold mt-1">
+            @Room.PricePerHour.ToString("0") ₽/час
+        </p>
+        <p class="text-zinc-600 mt-3 line-clamp-2">@Room.Description</p>
+    </div>
+
+    <div class="px-6 pb-6 flex gap-4">
+        <button @onclick="OnViewPhotos"
+                class="flex-1 border-2 border-[#C71585] text-[#C71585] font-medium py-4 rounded-2xl hover:bg-[#C71585] hover:text-white transition-all">
+            просмотр
+        </button>
+        <button @onclick="OnBook"
+                class="flex-1 bg-[#C71585] text-white font-medium py-4 rounded-2xl hover:bg-[#a3126b] transition-all">
+            забронировать
+        </button>
+    </div>
+</div>
