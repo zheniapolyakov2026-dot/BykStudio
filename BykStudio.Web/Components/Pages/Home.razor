@@ -1,31 +1,57 @@
 ﻿@page "/"
 @layout FullScreenLayout
+@rendermode InteractiveServer        
 @inject NavigationManager NavigationManager
 
 <div style="position: relative; height: 100vh; width: 100%; overflow: hidden;">
-    <!-- Full-screen background image (exact MAUI behavior) -->
+    <!-- Фон -->
     <img src="/images/room7.jpg"
          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1;"
          alt="Studio" />
 
-    <!-- White overlay (exactly like your BoxView Opacity="0.2") -->
+    <!-- Белый оверлей -->
     <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: white; opacity: 0.2; z-index: 2;"></div>
 
-    <!-- Content overlaid on top -->
+    <!-- Контент -->
     <div style="position: relative; z-index: 3; height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 20px;">
         <div>
-            <h1 style="color: #ffffff; font-size: clamp(80px, 13vw, 200px); font-weight: 900; letter-spacing: -8px; line-height: 1; margin: 0; text-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+            <h1 style="font-size: clamp(500px, 40vw, 650px);
+                       font-weight: 900;
+                       letter-spacing: -8px;
+                       line-height: 1;
+                       margin: 0;
+                       transform: translateY(-20vh);
+                       color: #ffffff;
+                       -webkit-text-stroke: 0.8px #e0c070;
+                       text-stroke: 0.8px #e0c070;
+                       text-shadow: 0 0 5px rgba(224,192,112,0.35), 0 10px 35px rgba(0,0,0,0.45);
+                       opacity: 0.6;">
                 BykStudio
             </h1>
 
             <button @onclick="GoToRooms"
-                    style="margin-top: 50px; padding: 25px 80px; font-size: 28px; font-weight: 600; border: 4px solid white; color: white; border-radius: 50px; background: transparent; cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.3); transition: all 0.3s ease;">
-                забронировать
+                    style="margin-top: 100px;
+                           padding: 25px 80px;
+                           font-size: 28px;
+                           font-weight: 600;
+                           border: 4px solid white;
+                           color: white;
+                           border-radius: 50px;
+                           background: transparent;
+                           cursor: pointer;
+                           box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                           transition: all 0.3s ease;
+                           transform: scale(3.4);
+                           transform-origin: center;">
+                Забронировать
             </button>
         </div>
     </div>
 </div>
 
 @code {
-    private void GoToRooms() => NavigationManager.NavigateTo("/rooms");
+    private void GoToRooms()
+    {
+        NavigationManager.NavigateTo("/rooms");
+    }
 }
