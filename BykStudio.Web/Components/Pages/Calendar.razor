@@ -1,0 +1,225 @@
+﻿@page "/calendar"
+@layout FullScreenLayout
+@rendermode InteractiveServer
+@using System.Globalization
+
+<style>
+    .booking-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 40px;
+        padding: 20px;
+        background-color: #ffffff; /* */
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        max-width: 900px;
+        margin: 0 auto;
+        font-family: sans-serif;
+    }
+
+    .calendar-section {
+        flex: 1;
+        min-width: 300px;
+    }
+
+    .time-section {
+        flex: 1;
+        min-width: 300px;
+    }
+
+    .time-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .time-slot {
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #dee2e6; /* */
+        background-color: #ffffff; /* */
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.2s ease;
+        font-weight: bold;
+    }
+
+        .time-slot:hover:not(:disabled) {
+            border-color: #007bff;
+            color: #007bff;
+        }
+
+        .time-slot.booked {
+            background-color: #ff6b6b; /* */
+            color: white;
+            border-color: #ff6b6b;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .time-slot.past {
+            background-color: #e9ecef; /* */
+            color: #adb5bd;
+            cursor: not-allowed;
+            border-color: #e9ecef;
+        }
+
+        .time-slot.selected {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+    h3 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        color: #333;
+    }
+</style>
+
+<div class="booking-wrapper">
+    <div class="calendar-section">
+        <h3>📅 Выберите день</h3>
+        <RadzenDatePicker TValue="DateTime?"
+                          Inline="true"
+                          Value="selectedDate"
+                          Change="@OnDateSelected"
+                          DateRender="@OnDateRender"
+                          Culture="@(new CultureInfo("ru-RU"))" />
+    </div>
+
+    <div class="time-section">
+        @if (selectedDate.HasValue)
+        {
+            <h3>⏰ Доступное время на @selectedDate.Value.ToString("dd MMMM", new CultureInfo("ru-RU"))</h3>
+
+            <div class="time-grid">
+                @foreach (var time in GetTimeSlotsForDate(selectedDate.Value))
+                {
+                    bool isBooked = IsTimeBooked(time);
+                    bool isPast = time < DateTime.Now;
+                    bool isSelected = selectedTime == time;
+
+                    <button class="time-slot @(isBooked ? "booked" : isPast ? "past" : isSelected ? "selected" : "")"
+                            disabled="@(isBooked || isPast)"
+                            @onclick="() => OnTimeSelected(time)">
+                        @time.ToString("HH:mm")
+                    </button>
+                }
+            </div>
+
+            @if (selectedTime.HasValue)
+            {
+                <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 8px;">
+                    <strong>Выбрано:</strong> @selectedTime.Value.ToString("dd MMMM в HH:mm", new CultureInfo("ru-RU"))
+                    <br />
+                    <RadzenButton Text="Подтвердить бронь" ButtonStyle="ButtonStyle.Primary" Class="mt-3" Click="@ConfirmBooking" />
+                </div>
+            }
+        }
+        else
+        {
+            <div style="color: #6c757d; margin-top: 20px;">
+                👈 Пожалуйста, выберите дату в календаре слева, чтобы увидеть свободные часы.
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    DateTime? selectedDate = DateTime.Today;
+    DateTime? selectedTime = null;
+
+    // Структура из вашего примера
+    class Appointment
+    {
+        public DateTime Start { get; set; } //
+        public DateTime End { get; set; } //
+        public string? Text { get; set; } //
+    }
+
+    // Тестовые данные бронирований
+    List<Appointment> appointments = new List<Appointment>
+    {
+        new Appointment { Start = DateTime.Today.AddHours(10), End = DateTime.Today.AddHours(11), Text = "Бронь 1" },
+        new Appointment { Start = DateTime.Today.AddHours(14), End = DateTime.Today.AddHours(16), Text = "Бронь 2" }
+    };
+
+    // Срабатывает при клике на день в календаре
+    void OnDateSelected(DateTime? date)
+    {
+        selectedDate = date;
+        selectedTime = null; // Сбрасываем выбранное время при смене дня
+    }
+
+    // Срабатывает при клике на кнопку времени
+    void OnTimeSelected(DateTime time)
+    {
+        selectedTime = time;
+    }
+
+    // Отрисовка дней в календаре (визуализация)
+    void OnDateRender(DateRenderEventArgs args)
+    {
+        // Отключаем прошедшие дни
+        if (args.Date.Date < DateTime.Today)
+        {
+            args.Disabled = true;
+        }
+
+        // Опционально: проверяем, остались ли свободные слоты на этот день.
+        // Если все слоты заняты, можно покрасить день в красный.
+        else if (args.Date.Date >= DateTime.Today)
+        {
+            var slots = GetTimeSlotsForDate(args.Date);
+            var availableSlots = slots.Count(s => !IsTimeBooked(s) && s > DateTime.Now);
+
+            if (availableSlots == 0)
+            {
+                args.Attributes["style"] = "background-color: #ffeaeb; color: #ff6b6b; text-decoration: line-through;";
+            }
+        }
+    }
+
+    // Генерация рабочих часов (например, с 09:00 до 21:00 с шагом в 1 час)
+    List<DateTime> GetTimeSlotsForDate(DateTime date)
+    {
+        var slots = new List<DateTime>();
+        var startTime = date.Date.AddHours(9);  // Начало в 09:00
+        var endTime = date.Date.AddHours(21);   // Конец в 21:00
+
+        while (startTime <= endTime)
+        {
+            slots.Add(startTime);
+            startTime = startTime.AddHours(1); // Шаг бронирования (1 час)
+        }
+        return slots;
+    }
+
+    // Проверка, занято ли конкретное время
+    bool IsTimeBooked(DateTime time)
+    {
+        // Проверяем, попадает ли время в промежуток существующей брони
+        return appointments.Any(a => time >= a.Start && time < a.End);
+    }
+
+    // Метод подтверждения брони
+    void ConfirmBooking()
+    {
+        if (selectedTime.HasValue)
+        {
+            appointments.Add(new Appointment
+            {
+                Start = selectedTime.Value,
+                End = selectedTime.Value.AddHours(1), // Бронь на 1 час
+                Text = "Новая бронь"
+            });
+
+            // Сбрасываем выбор после успешной брони
+            selectedTime = null;
+
+            // Здесь можно показать RadzenNotification об успешном бронировании
+        }
+    }
+}

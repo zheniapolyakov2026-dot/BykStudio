@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @using BykStudio.data.Models
 @inject IJSRuntime JS
+@inject NavigationManager NavigationManager
 
 <div style="position: relative; height: 100vh; width: 100%; overflow: hidden;">
 
@@ -88,7 +89,7 @@
                                            cursor: pointer;">
                                 Просмотреть
                             </button>
-                            <button @onclick="() => BookRoom(room)"
+                            <button @onclick="() => GoToCalendar()"
                                     style="flex: 1; 
                                            min-width: 150px;
                                            padding: clamp(14px, 2.8vw, 25px); 
@@ -127,6 +128,11 @@
             new Room { Name = "Комната 1", PricePerHour = 2500, Description = "Просторная светлая студия с большими окнами и современным минимализмом.", MainImageUrl = "/images/room7.jpg", Photos = new List<string> { "/images/room7.jpg" } },
             new Room { Name = "Комната 2", PricePerHour = 2800, Description = "Уютная комната с тёплым светом и винтажной атмосферой.", MainImageUrl = "/images/room7.jpg", Photos = new List<string> { "/images/room7.jpg" } }
         };
+    }
+
+    private void GoToCalendar()
+    {
+        NavigationManager.NavigateTo("/calendar");
     }
 
     private void OpenGallery(Room room) { CurrentPhotos = room.Photos; ShowGallery = true; }
