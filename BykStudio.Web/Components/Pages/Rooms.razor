@@ -14,76 +14,66 @@
     <!-- Белый оверлей -->
     <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: white; opacity: 0.2; z-index: 2;"></div>
 
-    <!-- Затемнение фона для лучшей читаемости -->
+    <!-- Очень сильное затемнение фона -->
     <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-                background: linear-gradient(to bottom, rgba(0,0,0,0.45), rgba(0,0,0,0.88));
+                background: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.95));
                 z-index: 3;"></div>
 
-    <!-- Основной контент — по центру -->
+    <!-- Основной контент — строго по центру -->
     <div style="position: relative; z-index: 4; height: 100vh;
                 display: flex; flex-direction: column; justify-content: center; align-items: center;
-                padding: 0 50px;">
+                padding: 0 40px;">
 
-        <h1 style="color: #ffffff; font-size: clamp(70px, 10vw, 130px); font-weight: 900;
-                   letter-spacing: -7px; text-shadow: 0 25px 70px rgba(0,0,0,0.95); margin-bottom: 90px;">
+        <h1 style="color: #ffffff; font-size: clamp(65px, 9.5vw, 115px); font-weight: 900;
+                   letter-spacing: -6px; text-shadow: 0 20px 65px rgba(0,0,0,0.9); margin-bottom: 100px;">
             Наши комнаты
         </h1>
 
-        <!-- Одна большая комната в центре -->
-        <div style="width: 100%; max-width: 1400px; position: relative;">
+        <!-- Карточки: ещё больше, по центру, большое расстояние -->
+        <div style="display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(800px, 1fr));
+                    gap: 200px;
+                    width: 100%;
+                    max-width: 1800px;
+                    justify-content: center;">
 
-            <!-- Стрелка влево -->
-            <button @onclick="PrevRoom"
-                    style="position: absolute; left: -60px; top: 50%; transform: translateY(-50%);
-                           font-size: 60px; color: white; background: transparent; border: none;
-                           cursor: pointer; z-index: 5; opacity: 0.85; transition: opacity 0.3s;">
-                ←
-            </button>
+            @foreach (var room in RoomList)
+            {
+                <div style="background: rgba(255,255,255,0.16); backdrop-filter: blur(24px);
+                                border-radius: 48px; overflow: hidden;
+                                border: 2px solid rgba(255,255,255,0.55);
+                                box-shadow: 0 50px 120px rgba(0,0,0,0.75);">
 
-            <!-- Карточка комнаты (очень большая) -->
-            <div style="background: rgba(255,255,255,0.18); backdrop-filter: blur(28px);
-                        border-radius: 55px; overflow: hidden;
-                        border: 2.5px solid rgba(255,255,255,0.6);
-                        box-shadow: 0 60px 140px rgba(0,0,0,0.8);
-                        margin: 0 auto;">
+                    <img src="/images/room7.jpg"
+                         style="width: 100%; height: 700px; object-fit: cover;"
+                         alt="@room.Name" />
 
-                <img src="@CurrentRoom.MainImageUrl"
-                     style="width: 100%; height: 720px; object-fit: cover;"
-                     alt="@CurrentRoom.Name" />
+                    <div style="padding: 60px 55px 55px;">
+                        <h2 style="color: white; font-size: 48px; font-weight: 800; margin: 0 0 14px;">@room.Name</h2>
+                        <p style="color: #ffd700; font-size: 35px; font-weight: 700; margin: 0 0 36px;">
+                            @room.PricePerHour ₽ / час
+                        </p>
+                        <p style="color: rgba(255,255,255,0.95); line-height: 1.65; margin-bottom: 55px; font-size: 20px;">
+                            @room.Description
+                        </p>
 
-                <div style="padding: 65px 60px 60px; text-align: center;">
-                    <h2 style="color: white; font-size: 52px; font-weight: 800; margin: 0 0 16px;">@CurrentRoom.Name</h2>
-                    <p style="color: #ffe066; font-size: 38px; font-weight: 700; margin: 0 0 40px;">
-                        @CurrentRoom.PricePerHour ₽ / час
-                    </p>
-                    <p style="color: rgba(255,255,255,0.97); line-height: 1.75; margin-bottom: 60px; font-size: 22px; max-width: 900px; margin-left: auto; margin-right: auto;">
-                        @CurrentRoom.Description
-                    </p>
-
-                    <div style="display: flex; gap: 36px; justify-content: center;">
-                        <button @onclick="() => OpenGallery(CurrentRoom)"
-                                style="padding: 32px 70px; font-size: 26px; font-weight: 600;
-                                       background: transparent; color: white; border: 5.5px solid white;
-                                       border-radius: 60px; cursor: pointer;">
-                            Просмотреть
-                        </button>
-                        <button @onclick="() => BookRoom(CurrentRoom)"
-                                style="padding: 32px 70px; font-size: 26px; font-weight: 700;
-                                       background: white; color: #111; border: none;
-                                       border-radius: 60px; cursor: pointer;">
-                            Забронировать
-                        </button>
+                        <div style="display: flex; gap: 32px;">
+                            <button @onclick="() => OpenGallery(room)"
+                                    style="flex: 1; padding: 30px; font-size: 25px; font-weight: 600;
+                                               background: transparent; color: white; border: 5px solid white;
+                                               border-radius: 50px; cursor: pointer;">
+                                Просмотреть
+                            </button>
+                            <button @onclick="() => BookRoom(room)"
+                                    style="flex: 1; padding: 30px; font-size: 25px; font-weight: 700;
+                                               background: white; color: #111; border: none;
+                                               border-radius: 50px; cursor: pointer;">
+                                Забронировать
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Стрелка вправо -->
-            <button @onclick="NextRoom"
-                    style="position: absolute; right: -60px; top: 50%; transform: translateY(-50%);
-                           font-size: 60px; color: white; background: transparent; border: none;
-                           cursor: pointer; z-index: 5; opacity: 0.85; transition: opacity 0.3s;">
-                →
-            </button>
+            }
         </div>
     </div>
 
@@ -95,8 +85,6 @@
 
 @code {
     private List<Room> RoomList { get; set; } = new();
-    private int CurrentIndex { get; set; } = 0;
-    private Room CurrentRoom => RoomList[CurrentIndex];
 
     private bool ShowGallery = false;
     private List<string> CurrentPhotos = new();
@@ -105,28 +93,12 @@
     {
         RoomList = new List<Room>
         {
-            new Room { Name = "Комната 1", PricePerHour = 2500, Description = "Просторная светлая студия с большими окнами и современным минимализмом. Идеально для любых съёмок.", MainImageUrl = "/images/room7.jpg", Photos = new List<string> { "/images/room7.jpg" } },
-            new Room { Name = "Комната 2", PricePerHour = 2800, Description = "Уютная комната с тёплым светом, винтажной мебелью и атмосферой старого Парижа.", MainImageUrl = "/images/room7.jpg", Photos = new List<string> { "/images/room7.jpg" } }
+            new Room { Name = "Комната 1", PricePerHour = 2500, Description = "Просторная светлая студия с большими окнами и современным минимализмом.", MainImageUrl = "/images/room7.jpg", Photos = new List<string> { "/images/room7.jpg" } },
+            new Room { Name = "Комната 2", PricePerHour = 2800, Description = "Уютная комната с тёплым светом и винтажной атмосферой.", MainImageUrl = "/images/room7.jpg", Photos = new List<string> { "/images/room7.jpg" } }
         };
     }
 
-    private void PrevRoom()
-    {
-        CurrentIndex = (CurrentIndex - 1 + RoomList.Count) % RoomList.Count;
-    }
-
-    private void NextRoom()
-    {
-        CurrentIndex = (CurrentIndex + 1) % RoomList.Count;
-    }
-
-    private void OpenGallery(Room room)
-    {
-        CurrentPhotos = room.Photos;
-        ShowGallery = true;
-    }
-
+    private void OpenGallery(Room room) { CurrentPhotos = room.Photos; ShowGallery = true; }
     private void CloseGallery() => ShowGallery = false;
-
     private async Task BookRoom(Room room) => await JS.InvokeVoidAsync("alert", $"Выбрана: {room.Name}");
 }
