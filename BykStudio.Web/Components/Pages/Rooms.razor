@@ -22,17 +22,21 @@
     <!-- Основной контент — строго по центру -->
     <div style="position: relative; z-index: 4; height: 100vh;
                 display: flex; flex-direction: column; justify-content: center; align-items: center;
-                padding: 0 40px;">
+                padding: 0 20px;">
 
-        <h1 style="color: #ffffff; font-size: clamp(65px, 9.5vw, 115px); font-weight: 900;
-                   letter-spacing: -6px; text-shadow: 0 20px 65px rgba(0,0,0,0.9); margin-bottom: 100px;">
-            Наши комнаты
+        <h1 style="color: #ffffff;
+                   font-size: clamp(42px, 7.8vw, 98px);
+                   font-weight: 900;
+                   letter-spacing: clamp(-3px, -0.65vw, -6px);
+                   text-shadow: 0 18px 55px rgba(0,0,0,0.9);
+                   margin-bottom: clamp(50px, 9vh, 100px);">
+            Наши залы
         </h1>
 
-        <!-- Карточки: ещё больше, по центру, большое расстояние -->
+        <!-- Карточки: полностью responsive -->
         <div style="display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(800px, 1fr));
-                    gap: 200px;
+                    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+                    gap: clamp(40px, 7vw, 160px);
                     width: 100%;
                     max-width: 1800px;
                     justify-content: center;">
@@ -40,34 +44,61 @@
             @foreach (var room in RoomList)
             {
                 <div style="background: rgba(255,255,255,0.16); backdrop-filter: blur(24px);
-                                border-radius: 48px; overflow: hidden;
-                                border: 2px solid rgba(255,255,255,0.55);
-                                box-shadow: 0 50px 120px rgba(0,0,0,0.75);">
+                            border-radius: clamp(32px, 4vw, 48px); overflow: hidden;
+                            border: 2px solid rgba(255,255,255,0.55);
+                            box-shadow: 0 40px 100px rgba(0,0,0,0.75);">
 
                     <img src="/images/room7.jpg"
-                         style="width: 100%; height: 700px; object-fit: cover;"
+                         style="width: 100%; 
+                                height: clamp(340px, 42vh, 620px); 
+                                object-fit: cover;"
                          alt="@room.Name" />
 
-                    <div style="padding: 60px 55px 55px;">
-                        <h2 style="color: white; font-size: 48px; font-weight: 800; margin: 0 0 14px;">@room.Name</h2>
-                        <p style="color: #ffd700; font-size: 35px; font-weight: 700; margin: 0 0 36px;">
+                    <div style="padding: clamp(38px, 5.5vw, 60px) clamp(32px, 4.5vw, 55px) clamp(42px, 5.5vw, 55px);">
+                        <h2 style="color: white; 
+                                   font-size: clamp(32px, 5.6vw, 48px); 
+                                   font-weight: 800; 
+                                   margin: 0 0 12px;">
+                            @room.Name
+                        </h2>
+                        <p style="color: #ffd700; 
+                                  font-size: clamp(24px, 4.2vw, 35px); 
+                                  font-weight: 700; 
+                                  margin: 0 0 32px;">
                             @room.PricePerHour ₽ / час
                         </p>
-                        <p style="color: rgba(255,255,255,0.95); line-height: 1.65; margin-bottom: 55px; font-size: 20px;">
+                        <p style="color: rgba(255,255,255,0.95); 
+                                  line-height: 1.62; 
+                                  margin-bottom: clamp(40px, 5vh, 55px); 
+                                  font-size: clamp(17px, 2.7vw, 20px);">
                             @room.Description
                         </p>
 
-                        <div style="display: flex; gap: 32px;">
+                        <div style="display: flex; gap: clamp(18px, 3vw, 32px); flex-wrap: wrap;">
                             <button @onclick="() => OpenGallery(room)"
-                                    style="flex: 1; padding: 30px; font-size: 25px; font-weight: 600;
-                                               background: transparent; color: white; border: 5px solid white;
-                                               border-radius: 50px; cursor: pointer;">
+                                    style="flex: 1; 
+                                           min-width: 140px;
+                                           padding: clamp(18px, 3.2vw, 30px); 
+                                           font-size: clamp(18.5px, 3.1vw, 25px); 
+                                           font-weight: 600;
+                                           background: transparent; 
+                                           color: white; 
+                                           border: clamp(3.5px, 0.45vw, 5px) solid white;
+                                           border-radius: 50px; 
+                                           cursor: pointer;">
                                 Просмотреть
                             </button>
                             <button @onclick="() => BookRoom(room)"
-                                    style="flex: 1; padding: 30px; font-size: 25px; font-weight: 700;
-                                               background: white; color: #111; border: none;
-                                               border-radius: 50px; cursor: pointer;">
+                                    style="flex: 1; 
+                                           min-width: 140px;
+                                           padding: clamp(18px, 3.2vw, 30px); 
+                                           font-size: clamp(18.5px, 3.1vw, 25px); 
+                                           font-weight: 700;
+                                           background: white; 
+                                           color: #111; 
+                                           border: none;
+                                           border-radius: 50px; 
+                                           cursor: pointer;">
                                 Забронировать
                             </button>
                         </div>
@@ -93,8 +124,8 @@
     {
         RoomList = new List<Room>
         {
-            new Room { Name = "Комната 1", PricePerHour = 2500, Description = "Просторная светлая студия с большими окнами и современным минимализмом.", MainImageUrl = "/images/room7.jpg", Photos = new List<string> { "/images/room7.jpg" } },
-            new Room { Name = "Комната 2", PricePerHour = 2800, Description = "Уютная комната с тёплым светом и винтажной атмосферой.", MainImageUrl = "/images/room7.jpg", Photos = new List<string> { "/images/room7.jpg" } }
+            new Room { Name = "Зал 1", PricePerHour = 2500, Description = "Просторная светлая студия с большими окнами и современным минимализмом.", MainImageUrl = "/images/room7.jpg", Photos = new List<string> { "/images/room7.jpg" } },
+            new Room { Name = "Зал 2", PricePerHour = 2800, Description = "Уютная комната с тёплым светом и винтажной атмосферой.", MainImageUrl = "/images/room7.jpg", Photos = new List<string> { "/images/room7.jpg" } }
         };
     }
 
