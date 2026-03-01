@@ -31,7 +31,7 @@
                    letter-spacing: clamp(-3px, -0.6vw, -5.5px); 
                    text-shadow: 0 18px 55px rgba(0,0,0,0.9); 
                    margin-bottom: clamp(32px, 5.8vh, 68px);">
-            Наши комнаты
+            Наши залы
         </h1>
 
         <!-- Карточки: теперь компактные + строго ограниченная ширина -->
@@ -89,7 +89,7 @@
                                            cursor: pointer;">
                                 Просмотреть
                             </button>
-                            <button @onclick="() => GoToCalendar()"
+                            <button @onclick="() => GoToCalendar(room)"
                                     style="flex: 1; 
                                            min-width: 150px;
                                            padding: clamp(14px, 2.8vw, 25px); 
@@ -125,17 +125,16 @@
     {
         RoomList = new List<Room>
         {
-            new Room { Name = "Комната 1", PricePerHour = 2500, Description = "Просторная светлая студия с большими окнами и современным минимализмом.", MainImageUrl = "/images/room7.jpg", Photos = new List<string> { "/images/room7.jpg" } },
-            new Room { Name = "Комната 2", PricePerHour = 2800, Description = "Уютная комната с тёплым светом и винтажной атмосферой.", MainImageUrl = "/images/room7.jpg", Photos = new List<string> { "/images/room7.jpg" } }
+            new Room { Name = "Зал 1", PricePerHour = 2500, Description = "Просторная светлая студия с большими окнами и современным минимализмом.", MainImageUrl = "/images/room7.jpg", Photos = new List<string> { "/images/room7.jpg" } },
+            new Room { Name = "Зал 2", PricePerHour = 2800, Description = "Уютная комната с тёплым светом и винтажной атмосферой.", MainImageUrl = "/images/room7.jpg", Photos = new List<string> { "/images/room7.jpg" } }
         };
     }
 
-    private void GoToCalendar()
+    private void GoToCalendar(Room room)
     {
-        NavigationManager.NavigateTo("/calendar");
+        NavigationManager.NavigateTo($"/calendar/{Uri.EscapeDataString(room.Name)}");
     }
 
     private void OpenGallery(Room room) { CurrentPhotos = room.Photos; ShowGallery = true; }
     private void CloseGallery() => ShowGallery = false;
-    private async Task BookRoom(Room room) => await JS.InvokeVoidAsync("alert", $"Выбрана: {room.Name}");
 }
