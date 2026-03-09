@@ -68,4 +68,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
+app.MapGet("/", () => Results.Ok(new { message = "BykStudio API is running", time = DateTime.UtcNow }));
+
 app.Run();

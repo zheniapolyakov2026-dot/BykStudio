@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 namespace BykStudio.data.Models
 {
     public class Room
@@ -22,7 +23,7 @@ namespace BykStudio.data.Models
         public List<string> Photos { get; set; } = new List<string>();
 
         // Navigation property
-        public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+        public ICollection<Booking> Bookings { get; set; } = [];
 
     }
 }

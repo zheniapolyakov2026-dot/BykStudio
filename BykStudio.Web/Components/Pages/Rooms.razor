@@ -2,7 +2,9 @@
 @layout FullScreenLayout
 @rendermode InteractiveServer
 @using BykStudio.data.Models
+@using BykStudio.Web.Services
 @inject IJSRuntime JS
+@inject RoomService RoomService
 @inject NavigationManager NavigationManager
 
 <div style="position: relative; height: 100vh; width: 100%; overflow: hidden;">
@@ -121,13 +123,19 @@
     private bool ShowGallery = false;
     private List<string> CurrentPhotos = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        RoomList = new List<Room>
+        try
         {
-            new Room { Name = "Зал 1", PricePerHour = 2500, Description = "Просторная светлая студия с большими окнами и современным минимализмом.", MainImageUrl = "/images/room7.jpg", Photos = new List<string> { "/images/room7.jpg" } },
-            new Room { Name = "Зал 2", PricePerHour = 2800, Description = "Уютная комната с тёплым светом и винтажной атмосферой.", MainImageUrl = "/images/room7.jpg", Photos = new List<string> { "/images/room7.jpg" } }
-        };
+            // Assuming RoomService has method like this
+            RoomList = await RoomService.GetAllRoomsAsync() ?? new List<Room>();
+        }
+        catch (Exception ex)
+        {
+            // For debugging
+            Console.WriteLine(ex.ToString());
+            // or show notification with Radzen
+        }
     }
 
     private void GoToCalendar(Room room)

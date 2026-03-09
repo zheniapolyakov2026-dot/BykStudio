@@ -14,15 +14,36 @@ namespace BykStudio.Web.Services
         // Get room by name (case‑insensitive)
         public async Task<Room?> GetRoomByNameAsync(string name)
         {
-            // Assumes your API has an endpoint like: api/rooms/byName/{name}
-            return await _httpClient.GetFromJsonAsync<Room>($"api/rooms/byName/{name}");
+            if (string.IsNullOrEmpty(name))
+                return null;
+
+            // Uses the endpoint we already know works (/api/rooms)
+            var allRooms = await GetAllRoomsAsync();
+            return allRooms.FirstOrDefault(r =>
+                string.Equals(r.Name, name, StringComparison.OrdinalIgnoreCase));
         }
 
         // Alternative: fetch all rooms and filter locally
-        public async Task<List<Room>> GetAllRoomsAsync()
+        public async Task<List<Room>?> GetAllRoomsAsync()
         {
-            return await _httpClient.GetFromJsonAsync<List<Room>>("api/rooms")
-                   ?? [];
+            try
+            {
+                var response = await _httpClient.GetAsync("api/rooms");
+                Console.WriteLine($"Status: {(int)response.StatusCode} {response.StatusCode}");
+
+                var content = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Response body: {content}");
+
+                response.EnsureSuccessStatusCode();
+
+                var rooms = await response.Content.ReadFromJsonAsync<List<Room>>();
+                return rooms;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception: {ex}");
+                return null;
+            }
         }
     }
 }

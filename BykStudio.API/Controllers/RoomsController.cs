@@ -1,4 +1,5 @@
 ﻿using BykStudio.data;
+using BykStudio.data.DTOs;
 using BykStudio.data.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -20,20 +21,50 @@ namespace BykStudio.API.Controllers
         [HttpGet("byName/{name}")]
         public async Task<ActionResult<Room>> GetRoomByName(string name)
         {
-            var room = await _context.Rooms
-                .FirstOrDefaultAsync(r => r.Name.ToLower() == name.ToLower());
+            try
+            {
+                Console.WriteLine($"Requested: {name}");
+                var room = await _context.Rooms
+                    .FirstOrDefaultAsync(r => r.Name.ToLower() == name.ToLower());
 
-            if (room == null)
-                return NotFound();
-
-            return room;
+                if (room == null)
+                    return NotFound();
+                return room;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ERROR in GetRoomByName('{name}'): {ex.Message}\n{ex}");
+                return StatusCode(500, new { error = ex.Message, details = ex.ToString() });
+            }
         }
 
         // Optional: get all rooms (if you need it later)
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Room>>> GetRooms()
+        public async Task<ActionResult<IEnumerable<RoomDto>>> GetRooms()
         {
-            return await _context.Rooms.ToListAsync();
+            try
+            {
+                var rooms = await _context.Rooms
+                    .Select(r => new RoomDto
+                    {
+                        RoomId = r.RoomId,
+                        Name = r.Name,
+                        PricePerHour = r.PricePerHour,
+                        Description = r.Description,
+                        Capacity = r.Capacity,
+                        MainImageUrl = r.MainImageUrl,
+                        Photos = r.Photos,
+                        IsAvailable = r.IsAvailable
+                    })
+                    .ToListAsync();
+
+                return Ok(rooms);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ERROR: {ex}");
+                return StatusCode(500, new { error = ex.Message });
+            }
         }
     }
 }

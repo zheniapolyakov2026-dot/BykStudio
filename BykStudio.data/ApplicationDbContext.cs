@@ -1,4 +1,5 @@
-﻿using BykStudio.data.Models;
+﻿using System.Text.Json;
+using BykStudio.data.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -76,6 +77,40 @@ namespace BykStudio.data
 
             builder.Entity<LoyaltyTransaction>()
                 .HasIndex(t => t.CreatedAt);
+
+            // Optional: Configure Photos to be stored as JSON (if not already)
+            builder.Entity<Room>()
+                .Property(r => r.Photos)
+                .HasConversion(
+                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
+                    v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null) ?? new List<string>()
+                );
+
+            // Seed Rooms
+            builder.Entity<Room>().HasData(
+                new Room
+                {
+                    RoomId = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                    Name = "Room A",
+                    PricePerHour = 1000m,
+                    Description = "Spacious room with natural light",
+                    Capacity = 10,
+                    MainImageUrl = "/images/room7.jpg",
+                    Photos = new List<string> { "room7.jpg", "room7.jpg" },
+                    IsAvailable = true
+                },
+                new Room
+                {
+                    RoomId = Guid.Parse("22222222-2222-2222-2222-222222222222"),
+                    Name = "Room B",
+                    PricePerHour = 1500m,
+                    Description = "Equipped with professional gear",
+                    Capacity = 15,
+                    MainImageUrl = "/images/room7.jpg",
+                    Photos = new List<string> { "room7.jpg", "room7.jpg" },
+                    IsAvailable = true
+                }
+            );
         }
 
     }

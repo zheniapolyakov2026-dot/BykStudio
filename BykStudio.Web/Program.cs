@@ -15,11 +15,15 @@ builder.Services.AddHttpClient<BookingService>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"] ?? "http://localhost:5199/"); // ← CHANGE TO YOUR API PORT
 });
-builder.Services.AddScoped<BookingService>();
 
 builder.Services.AddHttpClient<RoomService>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"] ?? "http://localhost:5199/");
+})
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    UseProxy = false,
+    Proxy = null
 });
 
 var app = builder.Build();
