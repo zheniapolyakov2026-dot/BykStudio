@@ -1,14 +1,13 @@
-﻿@page "/rooms"
+﻿@page "/makeup-booking"
 @layout FullScreenLayout
 @rendermode InteractiveServer
-@using BykStudio.data.Models
 @inject NavigationManager NavigationManager
 
 <div class="page-container" style="position: relative; height: 100vh; width: 100%; overflow: hidden;">
 
     <img src="/images/room7.jpg"
          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1;"
-         alt="Studio" />
+         alt="Makeup Studio" />
 
     <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: white; opacity: 0.07; z-index: 2;"></div>
 
@@ -28,7 +27,7 @@
                    letter-spacing: clamp(-3px, -0.6vw, -5.5px);
                    text-shadow: 0 18px 55px rgba(0,0,0,0.9);
                    margin-bottom: clamp(32px, 5.8vh, 68px);">
-            Наши залы
+            Гримерный стол
         </h1>
 
         <div style="display: grid;
@@ -38,36 +37,33 @@
                     max-width: 1700px;
                     justify-content: center;">
 
-            @foreach (var room in RoomList)
+            @foreach (var table in TableList)
             {
                 <div class="glass-card">
-                    <img src="@room.MainImageUrl"
+                    <img src="@table.ImageUrl"
                          style="width: 100%; height: clamp(245px, 31.5vh, 415px); object-fit: cover;"
-                         alt="@room.Name" />
+                         alt="@table.Name" />
                     <div style="padding: clamp(30px, 4vw, 46px) clamp(26px, 3.6vw, 46px) clamp(36px, 4.5vw, 50px);">
-                        <h2 style="color: white; font-size: clamp(28px, 4.7vw, 41px); font-weight: 800; margin: 0 0 12px;">
-                            @room.Name
-                        </h2>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                            <h2 style="color: white; font-size: clamp(28px, 4.7vw, 41px); font-weight: 800; margin: 0;">
+                                @table.Name
+                            </h2>
+                            <span style="color: #e0c070; font-size: clamp(20px, 3vw, 28px); font-weight: 700;">
+                                @table.PricePerHour ₽/час
+                            </span>
+                        </div>
                         <p style="color: rgba(255,255,255,0.95);
                                       line-height: 1.6;
                                       margin-bottom: 24px;
                                       font-size: clamp(15.5px, 2.4vw, 18.5px);">
-                            @room.Description
+                            @table.Description
                         </p>
-                        <div style="display: flex; gap: clamp(16px, 2.8vw, 28px); flex-wrap: wrap;">
-                            <button @onclick="() => OpenGallery(room)" class="btn-outline">Просмотреть</button>
-                            <button @onclick="GoToCalendar" class="btn-primary">Забронировать</button>
-                        </div>
+                        <button @onclick="GoToCalendar" class="btn-primary">Забронировать</button>
                     </div>
                 </div>
             }
         </div>
     </div>
-
-    @if (ShowGallery)
-    {
-        <PhotoGallery Photos="CurrentPhotos" OnClose="CloseGallery" />
-    }
 </div>
 
 <style>
@@ -110,30 +106,8 @@
             box-shadow: 0 45px 100px rgba(224,192,112,0.35);
         }
 
-    .btn-outline {
-        flex: 1;
-        min-width: 150px;
-        padding: clamp(16px, 2.8vw, 25px);
-        font-size: clamp(17px, 2.8vw, 22.5px);
-        font-weight: 600;
-        background: transparent;
-        color: white;
-        border: clamp(3px, 0.4vw, 4.5px) solid white;
-        border-radius: 50px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-        .btn-outline:hover {
-            background: rgba(255,255,255,0.12);
-            border-color: #e0c070;
-            color: #e0c070;
-            transform: translateY(-2px);
-        }
-
     .btn-primary {
-        flex: 1;
-        min-width: 150px;
+        width: 100%;
         padding: clamp(16px, 2.8vw, 25px);
         font-size: clamp(17px, 2.8vw, 22.5px);
         font-weight: 700;
@@ -153,20 +127,30 @@
 </style>
 
 @code {
-    private List<Room> RoomList { get; set; } = new();
-    private bool ShowGallery = false;
-    private List<string> CurrentPhotos = new();
+    // Полный класс с всеми свойствами
+    public class MakeupTable
+    {
+        public string Name { get; set; } = "";
+        public decimal PricePerHour { get; set; }
+        public string Description { get; set; } = "";
+        public string ImageUrl { get; set; } = "";
+    }
+
+    private List<MakeupTable> TableList { get; set; } = new();
 
     protected override void OnInitialized()
     {
-        RoomList = new List<Room>
+        TableList = new List<MakeupTable>
         {
-            new Room { Name = "Зал 1", PricePerHour = 2500, Description = "Просторная светлая студия с современным минимализмом.", MainImageUrl = "/images/room1.jpeg", Photos = new List<string> { "/images/room1.jpeg", "/images/room2.jpg", "/images/room3.jpeg" } },
-            new Room { Name = "Зал 2", PricePerHour = 2800, Description = "Уютная комната с тёплым светом и винтажной атмосферой.", MainImageUrl = "/images/room7.jpg", Photos = new List<string> { "/images/room7.jpg", "/images/room6.jpg", "/images/room5.jpg" } }
+            new MakeupTable
+            {
+                Name = "Стол визажиста",
+                PricePerHour = 250,
+                Description = "Профессиональное рабочее место с правильным освещением для создания идеального образа. Зеркало с LED-подсветкой, удобный барный стул.",
+                ImageUrl = "/images/room7.jpg"
+            }
         };
     }
 
-    private void OpenGallery(Room room) { CurrentPhotos = room.Photos; ShowGallery = true; }
-    private void CloseGallery() => ShowGallery = false;
     private void GoToCalendar() => NavigationManager.NavigateTo("/calendar");
 }

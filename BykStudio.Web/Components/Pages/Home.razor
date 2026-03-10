@@ -1,19 +1,32 @@
 ﻿@page "/"
+@rendermode InteractiveServer
 @layout FullScreenLayout
-@rendermode InteractiveServer        
 @inject NavigationManager NavigationManager
 
-<div style="position: relative; height: 100vh; width: 100%; overflow: hidden;">
-    <!-- Фон -->
+<div class="page-container"
+     style="position: relative; height: 100vh; width: 100%; overflow: hidden;"
+     @onmouseover="() => IsHovering = true"
+     @onmouseout="() => IsHovering = false">
+
     <img src="/images/room7.jpg"
          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1;"
          alt="Studio" />
 
-    <!-- Белый оверлей -->
-    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: white; opacity: 0.2; z-index: 2;"></div>
+    <!-- Очень лёгкое базовое затемнение -->
+    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: white; opacity: 0.07; z-index: 2;"></div>
 
-    <!-- Контент -->
-    <div style="position: relative; z-index: 3; height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 20px;">
+    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+                background: linear-gradient(to bottom, rgba(0,0,0,0.18), rgba(0,0,0,0.65));
+                z-index: 3;"></div>
+
+    <!-- Динамическое затемнение (плавно появляется/исчезает) -->
+    <div class="hover-dark-overlay" style="opacity: @(IsHovering ? "1" : "0");"></div>
+
+    <button @onclick="GoToRegister" class="auth-button">
+        Регистрация / Вход
+    </button>
+
+    <div style="position: relative; z-index: 4; height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 20px;">
         <div>
             <h1 style="font-size: clamp(85px, 16.5vw, 295px);
                        font-weight: 900;
@@ -28,31 +41,82 @@
                 BykStudio
             </h1>
 
-            <button @onclick="GoToRooms"
-                    style="margin-top: clamp(40px, 7vh, 95px);
-                           padding: clamp(15px, 2.6vw, 21px) clamp(52px, 6.8vw, 88px);
-                           font-size: clamp(17.5px, 2.6vw, 25px);
-                           font-weight: 600;
-                           border: clamp(3px, 0.4vw, 4.5px) solid white;
-                           color: white;
-                           border-radius: 50px;
-                           background: transparent;
-                           cursor: pointer;
-                           box-shadow: 0 10px 32px rgba(0,0,0,0.35);
-                           transition: all 0.3s ease;">
+            <button @onclick="GoToBookingSelection" class="main-booking-btn">
                 Забронировать
             </button>
         </div>
     </div>
 </div>
 
+<style>
+    .page-container {
+        position: relative;
+    }
+
+    .hover-dark-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(to bottom, rgba(0,0,0,0.45), rgba(0,0,0,0.93));
+        z-index: 3.5;
+        transition: opacity 0.45s ease;
+        pointer-events: none;
+    }
+
+    .auth-button {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 5;
+        padding: clamp(8px, 1.5vw, 14px) clamp(20px, 3vw, 35px);
+        font-size: clamp(13px, 2vw, 18px);
+        font-weight: 600;
+        border: clamp(1.5px, 0.25vw, 2.5px) solid white;
+        color: white;
+        border-radius: 50px;
+        background: transparent;
+        cursor: pointer;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+        text-shadow: 0 0 5px rgba(0,0,0,0.7), 0 0 10px rgba(0,0,0,0.5);
+        transition: all 0.3s ease;
+    }
+
+        .auth-button:hover {
+            background: rgba(255,255,255,0.12);
+            border-color: #e0c070;
+            color: #e0c070;
+            transform: scale(1.05);
+        }
+
+    .main-booking-btn {
+        margin-top: clamp(40px, 7vh, 95px);
+        padding: clamp(15px, 2.6vw, 21px) clamp(52px, 6.8vw, 88px);
+        font-size: clamp(17.5px, 2.6vw, 25px);
+        font-weight: 600;
+        border: clamp(3px, 0.4vw, 4.5px) solid white;
+        color: white;
+        border-radius: 50px;
+        background: transparent;
+        cursor: pointer;
+        box-shadow: 0 10px 32px rgba(0,0,0,0.35);
+        text-shadow: 0 0 5px rgba(0,0,0,0.7), 0 0 10px rgba(0,0,0,0.5);
+        transition: all 0.4s ease;
+    }
+
+        .main-booking-btn:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: #e0c070;
+            color: #e0c070;
+            transform: scale(1.04);
+            box-shadow: 0 15px 40px rgba(224,192,112,0.25);
+        }
+</style>
+
 @code {
-    private void GoToRooms()
-    {
-        NavigationManager.NavigateTo("/rooms");
-    }
-    private void GoToCalendar()
-    {
-        NavigationManager.NavigateTo("/calendar");
-    }
+    private bool IsHovering = false;
+
+    private void GoToBookingSelection() => NavigationManager.NavigateTo("/booking-selection");
+    private void GoToRegister() => NavigationManager.NavigateTo("/register");
 }

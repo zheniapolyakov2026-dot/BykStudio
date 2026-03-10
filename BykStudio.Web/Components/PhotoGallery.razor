@@ -1,0 +1,52 @@
+﻿@* PhotoGallery.razor *@
+<div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.9); z-index: 1000; display: flex;
+            flex-direction: column; align-items: center; justify-content: center;">
+
+    @* Кнопка закрытия *@
+    <button @onclick="Close" style="position: absolute; top: 30px; right: 30px;
+            background: white; border: none; border-radius: 50%; width: 50px;
+            height: 50px; cursor: pointer; font-size: 24px; font-weight: bold; z-index: 1001;">
+        ✕
+    </button>
+
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
+        @if (Photos != null && Photos.Any())
+        {
+            @* Отображение текущего фото *@
+            <img src="@Photos[currentIndex]"
+                 style="height: 70vh; max-width: 80vw; border-radius: 20px;
+                            box-shadow: 0 10px 30px rgba(0,0,0,0.5); object-fit: contain;" />
+
+            @* Кнопка "Вперед" *@
+            <button @onclick="NextPhoto"
+                    style="padding: 15px 40px; font-size: 18px; border-radius: 30px;
+                               border: none; cursor: pointer; background: white; font-weight: bold;">
+                Следующее фото →
+            </button>
+
+            @* Индикатор (необязательно, для удобства) *@
+            <div style="color: white; margin-top: 10px;">
+                @(currentIndex + 1) / @Photos.Count
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public List<string> Photos { get; set; } = new();
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private int currentIndex = 0;
+
+    private void NextPhoto()
+    {
+        if (Photos.Any())
+        {
+            // Формула остатка от деления создает бесконечный цикл
+            currentIndex = (currentIndex + 1) % Photos.Count;
+        }
+    }
+
+    private async Task Close() => await OnClose.InvokeAsync();
+}
