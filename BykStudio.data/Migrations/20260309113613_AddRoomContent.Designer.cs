@@ -3,6 +3,7 @@ using System;
 using BykStudio.data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BykStudio.data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260309113613_AddRoomContent")]
+    partial class AddRoomContent
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -281,7 +284,7 @@ namespace BykStudio.data.Migrations
                             IsAvailable = true,
                             MainImageUrl = "/images/room7.jpg",
                             Name = "Room A",
-                            Photos = "[\"room7.jpg\",\"room7.jpg\"]",
+                            Photos = "[\"roomA_1.jpg\",\"roomA_2.jpg\"]",
                             PricePerHour = 1000m
                         },
                         new
@@ -292,7 +295,7 @@ namespace BykStudio.data.Migrations
                             IsAvailable = true,
                             MainImageUrl = "/images/room7.jpg",
                             Name = "Room B",
-                            Photos = "[\"room7.jpg\",\"room7.jpg\"]",
+                            Photos = "[\"roomB_1.jpg\",\"roomB_2.jpg\"]",
                             PricePerHour = 1500m
                         });
                 });
