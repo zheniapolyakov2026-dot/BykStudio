@@ -1,14 +1,17 @@
-﻿using BykStudio.data.DTOs;
-using BykStudio.data.Interfaces;
-using BykStudio.data.Models;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using BykStudio.data;
+using BykStudio.data.DTOs;
+using BykStudio.data.Interfaces;
+using BykStudio.data.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace BykStudio.API.Controllers
 {
@@ -20,7 +23,8 @@ namespace BykStudio.API.Controllers
         RoleManager<IdentityRole> roleManager,
         IConfiguration configuration,
         IEmailSender emailSender,
-        IWebHostEnvironment env) : ControllerBase
+        IWebHostEnvironment env,
+        ApplicationDbContext context) : ControllerBase
     {
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] Register model)
@@ -29,7 +33,8 @@ namespace BykStudio.API.Controllers
             { 
                 UserName = model.Email, 
                 Email = model.Email, 
-                FullName = model.FullName 
+                FullName = model.FullName,
+                PhoneNumber = model.Phone
             };
             var result = await userManager.CreateAsync(user, model.Password);
 
@@ -45,6 +50,17 @@ namespace BykStudio.API.Controllers
                 await roleManager.CreateAsync(new IdentityRole(defaultRole));
             }
             await userManager.AddToRoleAsync(user, defaultRole);
+
+            // Auto-create LoyaltyPoints
+            var loyaltyPoints = new LoyaltyPoints
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                Balance = 0,
+                LastUpdated = DateTime.UtcNow
+            };
+            context.LoyaltyPoints.Add(loyaltyPoints);
+            await context.SaveChangesAsync();
 
             // Generate email confirmation token + URL
             var code = await userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -65,17 +81,12 @@ namespace BykStudio.API.Controllers
             await emailSender.SendEmailAsync(user.Email!, emailSubject, emailBody);
 
             // Response
-            var response = new Dictionary<string, object?>
+            var registerResponse = new RegisterResponse
             {
-                { "message", "User registered successfully. A confirmation email has been sent." }
+                Message = "User registered successfully. A confirmation email has been sent.",
+                ConfirmationUrl = env.IsDevelopment() ? callbackUrl : null
             };
-
-            if (env.IsDevelopment())
-            {
-                response["confirmationUrl"] = callbackUrl; // For local testing only
-            }
-
-            return Ok(response);
+            return Ok(registerResponse);
         }
 
         [HttpPost("login")]
@@ -137,6 +148,59 @@ namespace BykStudio.API.Controllers
             }
 
             return BadRequest(result.Errors);
+        }
+
+        [HttpGet("profile")]
+        [Authorize]
+        public async Task<IActionResult> GetProfile()
+        {
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+                var user = await context.Users
+                    .Include(u => u.LoyaltyPoints)
+                    .Include(u => u.Bookings).ThenInclude(b => b.Room)
+                    .FirstOrDefaultAsync(u => u.Id == userId);
+
+                if (user == null) return NotFound();
+
+                var transactions = await context.LoyaltyTransactions
+                    .Where(t => t.UserId == userId)
+                    .OrderByDescending(t => t.CreatedAt)
+                    .ToListAsync();
+
+                var profileDto = new ProfileDto
+                {
+                    FullName = user.FullName ?? "",
+                    Email = user.Email ?? "",
+                    PhoneNumber = user.PhoneNumber,
+                    LoyaltyBalance = user.LoyaltyPoints?.Balance ?? 0,
+                    Bookings = user.Bookings.Select(b => new BookingSummaryDto
+                    {
+                        RoomName = b.Room?.Name,
+                        StartTime = b.StartTime,
+                        EndTime = b.EndTime,
+                        TotalPrice = b.TotalPrice
+                    }).ToList(),
+                    Transactions = transactions.Select(t => new TransactionSummaryDto
+                    {
+                        CreatedAt = t.CreatedAt,
+                        Points = t.Points,
+                        Type = t.Type,
+                        Description = t.Description
+                    }).ToList()
+                };
+
+                return Ok(profileDto);
+            }
+            catch (Exception ex)
+            {
+                // Log to console (or use ILogger)
+                Console.WriteLine($"ERROR in GetProfile: {ex}");
+                return StatusCode(500, new { error = ex.Message, stackTrace = ex.StackTrace });
+            }
         }
 
         private async Task<string> GenerateJwtToken(ApplicationUser user)

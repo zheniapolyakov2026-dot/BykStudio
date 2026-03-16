@@ -26,6 +26,26 @@ builder.Services.AddHttpClient<RoomService>(client =>
     Proxy = null
 });
 
+builder.Services.AddHttpClient<AuthService>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"] ?? "http://localhost:5199/");
+})
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    UseProxy = false,
+    Proxy = null
+});
+
+builder.Services.AddHttpClient<ProfileApiClient>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"] ?? "http://localhost:5199/");
+})
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    UseProxy = false,
+    Proxy = null
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

@@ -13,13 +13,30 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 // Получение строки подключения из конфигурации
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new InvalidOperationException("Connection string 'DefaultConnection' is missing in appsettings.json / appsettings.Development.json");
+}
 
 // Добавление DbContext с провайдером PostgreSQL (или SQLite)
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString)); // или UseSqlite
 
 // Identity (используем наши модели и контекст)
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+{
+    // Password settings
+    options.Password.RequireDigit = false;
+    options.Password.RequiredLength = 4;           // or 6 if you prefer
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequiredUniqueChars = 1;      // at least one unique character
+
+    // Email confirmation settings (if you keep it)
+    options.SignIn.RequireConfirmedEmail = false;
+    options.SignIn.RequireConfirmedAccount = false;
+})
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
@@ -61,13 +78,38 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseDeveloperExceptionPage();
+}
+else
+{
+    app.UseExceptionHandler("/Error");
 }
 
-app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
 app.MapGet("/", () => Results.Ok(new { message = "BykStudio API is running", time = DateTime.UtcNow }));
+
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"===== GLOBAL EXCEPTION =====");
+        Console.WriteLine(ex);
+        // Return a 500 so we see something in the client
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(new
+        {
+            error = ex.Message,
+            stackTrace = ex.StackTrace
+        }));
+    }
+});
 
 app.Run();
