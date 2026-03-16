@@ -18,9 +18,9 @@ if (string.IsNullOrEmpty(connectionString))
     throw new InvalidOperationException("Connection string 'DefaultConnection' is missing in appsettings.json / appsettings.Development.json");
 }
 
-// ƒобавление DbContext с провайдером PostgreSQL (или SQLite)
+// ƒобавление DbContext с провайдером PostgreSQL
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString)); // или UseSqlite
+    options.UseNpgsql(connectionString));
 
 // Identity (используем наши модели и контекст)
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
