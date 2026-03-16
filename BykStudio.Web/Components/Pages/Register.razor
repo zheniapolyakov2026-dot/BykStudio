@@ -1,12 +1,16 @@
 ﻿@page "/register"
+@rendermode InteractiveServer
 @using System.ComponentModel.DataAnnotations
+@using BykStudio.data.DTOs
+@using BykStudio.Web.Services
 @layout FullScreenLayout
+@inject AuthService AuthService
 @inject NavigationManager NavigationManager
 
 <div style="position: relative; height: 100vh; width: 100%; overflow: hidden;">
     <img src="/images/room7.jpg"
          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1;"
-         alt="Background" /> [cite: 1, 2]
+         alt="Background" /> 
 
     <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: white; opacity: 0.3; z-index: 2;"></div>
 
@@ -16,66 +20,86 @@
                    background: rgba(0,0,0,0.3); border: 2px solid white; border-radius: 50px;
                    cursor: pointer; transition: all 0.3s ease;">
         ← Назад
-    </button> [cite: 3, 4]
+    </button> 
 
     <div style="position: relative; z-index: 3; height: 100vh; display: flex; align-items: center; justify-content: center;">
-        [cite: 5]
         <div style="background: rgba(255, 255, 255, 0.9); padding: 40px; border-radius: 20px;
                     box-shadow: 0 15px 35px rgba(0,0,0,0.2); width: 100%; max-width: 400px; text-align: center;">
 
             <h2 style="margin-bottom: 30px; font-weight: 900; color: #333;">Регистрация</h2> 
 
-            <EditForm Model="@registrationModel" OnValidSubmit="HandleRegistration">
+            <EditForm Model="@model" OnValidSubmit="HandleRegister">
                 <DataAnnotationsValidator />
 
                 <div style="margin-bottom: 20px; text-align: left;">
                     <label style="display: block; margin-bottom: 8px; font-weight: 600;">Имя</label>
-                    <InputText @bind-Value="registrationModel.Name"
-                               style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px;"
-                               placeholder="Ваше имя" />
-                    <ValidationMessage For="@(() => registrationModel.Name)" style="color: #dc3545; font-size: 12px;" />
+                    <InputText @bind-Value="model.FullName" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px;" placeholder="Ваше имя" />
+                    <ValidationMessage For="@(() => model.FullName)" style="color: #dc3545; font-size: 12px;" />
+                </div>
+
+                <div style="margin-bottom: 20px; text-align: left;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Email</label>
+                    <InputText @bind-Value="model.Email" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px;" placeholder="your@email.com" />
+                    <ValidationMessage For="@(() => model.Email)" style="color: #dc3545; font-size: 12px;" />
+                </div>
+
+                <div style="margin-bottom: 20px; text-align: left;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Пароль</label>
+                    <InputText type="password" @bind-Value="model.Password" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px;" placeholder="••••••••" />
+                    <ValidationMessage For="@(() => model.Password)" style="color: #dc3545; font-size: 12px;" />
                 </div>
 
                 <div style="margin-bottom: 30px; text-align: left;">
                     <label style="display: block; margin-bottom: 8px; font-weight: 600;">Номер телефона</label>
-                    <InputText @bind-Value="registrationModel.Phone"
-                               style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px;"
-                               placeholder="+7 (___) ___-__-__" />
-                    <ValidationMessage For="@(() => registrationModel.Phone)" style="color: #dc3545; font-size: 12px;" />
+                    <InputText @bind-Value="model.Phone" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px;" placeholder="+7 (___) ___-__-__" />
+                    <ValidationMessage For="@(() => model.Phone)" style="color: #dc3545; font-size: 12px;" />
                 </div>
 
                 <button type="submit"
                         style="width: 100%; padding: 15px; background: #e0c070; border: none;
                                border-radius: 50px; color: white; font-weight: 700; font-size: 18px;
                                cursor: pointer; box-shadow: 0 5px 15px rgba(224,192,112,0.4); transition: 0.3s;">
-                    Войти
+                    Зарегистрироваться
                 </button>
             </EditForm>
+            @if (!string.IsNullOrEmpty(confirmationUrl))
+            {
+                <div style="margin-top:20px; color:green; text-align:center;">
+                    <strong>Регистрация успешна!</strong><br />
+                    <a href="@confirmationUrl" target="_blank" style="color:#e0c070; text-decoration:underline;">
+                        → Кликните здесь, чтобы подтвердить email (только для разработки)
+                    </a>
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div style="margin-top:20px; padding:10px; background-color:#f8d7da; color:#721c24; border:1px solid #f5c6cb; border-radius:5px; text-align:center;">
+                    <strong>Ошибка:</strong> @errorMessage
+                </div>
+            }
         </div>
     </div>
 </div>
 
 @code {
-    private RegistrationModel registrationModel = new RegistrationModel();
+    private BykStudio.data.DTOs.Register model = new();
+    private string? confirmationUrl;
+    private string? errorMessage;
 
-    private void GoBack()
+    private void GoBack() => NavigationManager.NavigateTo("/");
+
+    private async Task HandleRegister()
     {
-        NavigationManager.NavigateTo("/");
-    }
-
-    private void HandleRegistration()
-    {
-        // Логика регистрации
-        NavigationManager.NavigateTo("/rooms"); 
-    }
-
-    public class RegistrationModel
-    {
-        [Required(ErrorMessage = "Пожалуйста, введите имя")]
-        public string Name { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "Введите номер телефона")]
-        [Phone(ErrorMessage = "Неверный формат номера")]
-        public string Phone { get; set; } = string.Empty;
+        errorMessage = null;
+        var result = await AuthService.RegisterAsync(model);
+        if (result.Success)
+        {
+            confirmationUrl = result.Response?.ConfirmationUrl;
+        }
+        else
+        {
+            // Combine multiple errors into one string (you can also display them as a list)
+            errorMessage = string.Join(" ", result.Errors);
+        }
     }
 }

@@ -23,7 +23,10 @@
     <div class="hover-dark-overlay" style="opacity: @(IsHovering ? "1" : "0");"></div>
 
     <button @onclick="GoToRegister" class="auth-button">
-        Регистрация / Вход
+        Регистрация
+    </button>
+    <button @onclick="GoToLogin" class="auth-button">
+        Вход
     </button>
 
     <div style="position: relative; z-index: 4; height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 20px;">
@@ -119,4 +122,5 @@
 
     private void GoToBookingSelection() => NavigationManager.NavigateTo("/booking-selection");
     private void GoToRegister() => NavigationManager.NavigateTo("/register");
+    private void GoToLogin() => NavigationManager.NavigateTo("/login");
 }

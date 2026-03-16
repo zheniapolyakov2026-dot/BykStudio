@@ -7,7 +7,7 @@ namespace BykStudio.data.Models
         public string? FullName { get; set; }
 
         // Navigation properties
-        public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+        public ICollection<Booking> Bookings { get; set; } = [];
         public LoyaltyPoints? LoyaltyPoints { get; set; }
     }
 }
