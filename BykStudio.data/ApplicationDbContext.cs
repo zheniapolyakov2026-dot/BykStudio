@@ -91,7 +91,7 @@ namespace BykStudio.data
                 new Room
                 {
                     RoomId = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-                    Name = "Room A",
+                    Name = "зал 1",
                     PricePerHour = 1000m,
                     Description = "Spacious room with natural light",
                     Capacity = 10,
@@ -102,7 +102,7 @@ namespace BykStudio.data
                 new Room
                 {
                     RoomId = Guid.Parse("22222222-2222-2222-2222-222222222222"),
-                    Name = "Room B",
+                    Name = "зал 2",
                     PricePerHour = 1500m,
                     Description = "Equipped with professional gear",
                     Capacity = 15,

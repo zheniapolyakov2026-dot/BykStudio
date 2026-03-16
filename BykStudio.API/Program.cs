@@ -14,9 +14,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Получение строки подключения из конфигурации
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-// Добавление DbContext с провайдером PostgreSQL (или SQLite)
+// Добавление DbContext с провайдером PostgreSQL
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString)); // или UseSqlite
+    options.UseNpgsql(connectionString));
 
 // Identity (используем наши модели и контекст)
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
