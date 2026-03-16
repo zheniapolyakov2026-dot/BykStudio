@@ -51,7 +51,6 @@
                         <p><strong>Имя:</strong> @profile.FullName</p>
                         <p><strong>Email:</strong> @profile.Email</p>
                         <p><strong>Телефон:</strong> @profile.PhoneNumber</p>
-                        <p><strong>Баланс лояльности:</strong> <span style="color: #e0c070;">@profile.LoyaltyBalance очков</span></p>
                     </div>
                     <div style="margin-top: 30px; display: flex;">
                         <button @onclick="Logout" class="btn-outline" style="width: 100%;">Выйти</button>
@@ -75,29 +74,6 @@
                     else
                     {
                         <p class="empty-text">Пока нет бронирований</p>
-                    }
-                </div>
-
-                <div class="glass-card" style="padding: clamp(30px, 4vw, 46px);">
-                    <h2 class="card-title">Операции лояльности</h2>
-                    @if (profile.Transactions.Any())
-                    {
-                        <ul class="custom-list">
-                            @foreach (var t in profile.Transactions)
-                            {
-                                <li>
-                                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                                        <span>@t.Description (@t.Type)</span>
-                                        <span style="font-size: 0.85em; opacity: 0.7;">@t.CreatedAt.ToShortDateString()</span>
-                                    </div>
-                                    <strong style="color: #e0c070;">@t.Points очков</strong>
-                                </li>
-                            }
-                        </ul>
-                    }
-                    else
-                    {
-                        <p class="empty-text">Операций пока нет</p>
                     }
                 </div>
 

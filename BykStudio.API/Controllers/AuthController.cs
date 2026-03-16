@@ -51,17 +51,6 @@ namespace BykStudio.API.Controllers
             }
             await userManager.AddToRoleAsync(user, defaultRole);
 
-            // Auto-create LoyaltyPoints
-            var loyaltyPoints = new LoyaltyPoints
-            {
-                Id = Guid.NewGuid(),
-                UserId = user.Id,
-                Balance = 0,
-                LastUpdated = DateTime.UtcNow
-            };
-            context.LoyaltyPoints.Add(loyaltyPoints);
-            await context.SaveChangesAsync();
-
             // Generate email confirmation token + URL
             var code = await userManager.GenerateEmailConfirmationTokenAsync(user);
             var encodedCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
@@ -160,36 +149,22 @@ namespace BykStudio.API.Controllers
                 if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
                 var user = await context.Users
-                    .Include(u => u.LoyaltyPoints)
                     .Include(u => u.Bookings).ThenInclude(b => b.Room)
                     .FirstOrDefaultAsync(u => u.Id == userId);
 
                 if (user == null) return NotFound();
-
-                var transactions = await context.LoyaltyTransactions
-                    .Where(t => t.UserId == userId)
-                    .OrderByDescending(t => t.CreatedAt)
-                    .ToListAsync();
 
                 var profileDto = new ProfileDto
                 {
                     FullName = user.FullName ?? "",
                     Email = user.Email ?? "",
                     PhoneNumber = user.PhoneNumber,
-                    LoyaltyBalance = user.LoyaltyPoints?.Balance ?? 0,
                     Bookings = user.Bookings.Select(b => new BookingSummaryDto
                     {
                         RoomName = b.Room?.Name,
                         StartTime = b.StartTime,
                         EndTime = b.EndTime,
                         TotalPrice = b.TotalPrice
-                    }).ToList(),
-                    Transactions = transactions.Select(t => new TransactionSummaryDto
-                    {
-                        CreatedAt = t.CreatedAt,
-                        Points = t.Points,
-                        Type = t.Type,
-                        Description = t.Description
                     }).ToList()
                 };
 

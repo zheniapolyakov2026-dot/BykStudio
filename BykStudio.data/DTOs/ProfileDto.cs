@@ -9,9 +9,7 @@ namespace BykStudio.data.DTOs
         public string FullName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string? PhoneNumber { get; set; }
-        public int LoyaltyBalance { get; set; }
         public List<BookingSummaryDto> Bookings { get; set; } = new();
-        public List<TransactionSummaryDto> Transactions { get; set; } = new();
     }
 
     public class BookingSummaryDto

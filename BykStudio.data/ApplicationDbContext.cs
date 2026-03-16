@@ -15,19 +15,10 @@ namespace BykStudio.data
         public DbSet<Room> Rooms { get; set; }
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<Payment> Payments { get; set; }
-        public DbSet<LoyaltyPoints> LoyaltyPoints { get; set; }
-        public DbSet<LoyaltyTransaction> LoyaltyTransactions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
-
-            // Configure one-to-one between ApplicationUser and LoyaltyPoints
-            builder.Entity<ApplicationUser>()
-                .HasOne(u => u.LoyaltyPoints)
-                .WithOne(lp => lp.User)
-                .HasForeignKey<LoyaltyPoints>(lp => lp.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
 
             // Configure one-to-many: User -> Bookings
             builder.Entity<ApplicationUser>()
@@ -64,20 +55,6 @@ namespace BykStudio.data
                 .Property(p => p.Amount)
                 .HasPrecision(18, 2);
 
-            // Configure one-to-many: User -> Transactions
-            builder.Entity<LoyaltyTransaction>()
-                .HasOne(t => t.User)
-                .WithMany()
-                .HasForeignKey(t => t.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // Configure indexes for performance
-            builder.Entity<LoyaltyTransaction>()
-                .HasIndex(t => t.UserId);
-
-            builder.Entity<LoyaltyTransaction>()
-                .HasIndex(t => t.CreatedAt);
-
             // Optional: Configure Photos to be stored as JSON (if not already)
             builder.Entity<Room>()
                 .Property(r => r.Photos)
@@ -96,7 +73,7 @@ namespace BykStudio.data
                     Description = "Spacious room with natural light",
                     Capacity = 10,
                     MainImageUrl = "/images/room7.jpg",
-                    Photos = new List<string> { "room7.jpg", "room7.jpg" },
+                    Photos = ["/images/room7.jpg", "/images/room7.jpg"],
                     IsAvailable = true
                 },
                 new Room
@@ -107,7 +84,7 @@ namespace BykStudio.data
                     Description = "Equipped with professional gear",
                     Capacity = 15,
                     MainImageUrl = "/images/room7.jpg",
-                    Photos = new List<string> { "room7.jpg", "room7.jpg" },
+                    Photos = ["room7.jpg", "room7.jpg"],
                     IsAvailable = true
                 }
             );
