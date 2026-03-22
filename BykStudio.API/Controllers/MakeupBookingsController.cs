@@ -53,7 +53,7 @@ namespace BykStudio.API.Controllers
                 bool isGuest = string.IsNullOrEmpty(userId);
 
                 // 5. Create booking
-                var booking = new MakeupBooking
+                var booking = new MakeUpBooking
                 {
                     MakeupTableId = request.MakeupTableId,
                     UserId = isGuest ? "guest-" + Guid.NewGuid().ToString() : userId,

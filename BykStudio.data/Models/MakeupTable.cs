@@ -24,6 +24,6 @@ namespace BykStudio.data.Models
         public string MainImageUrl { get; set; } = string.Empty;
 
         // Navigation
-        public ICollection<MakeupBooking> MakeupBookings { get; set; } = new List<MakeupBooking>();
+        public ICollection<MakeUpBooking> MakeupBookings { get; set; } = [];
     }
 }

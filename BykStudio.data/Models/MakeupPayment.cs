@@ -18,6 +18,6 @@ namespace BykStudio.data.Models
         public bool IsSuccessful { get; set; }
 
         [ForeignKey(nameof(MakeupBookingId))]
-        public MakeupBooking MakeupBooking { get; set; } = null!;
+        public MakeUpBooking MakeupBooking { get; set; } = null!;
     }
 }

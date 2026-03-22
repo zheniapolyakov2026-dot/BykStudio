@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BykStudio.data.Models
 {
-    public class MakeupBooking
+    public class MakeUpBooking
     {
         [Key]
         public Guid MakeupBookingId { get; set; } = Guid.NewGuid();

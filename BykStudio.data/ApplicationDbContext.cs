@@ -16,7 +16,7 @@ namespace BykStudio.data
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<Payment> Payments { get; set; }
         public DbSet<MakeupTable> MakeupTables { get; set; }
-        public DbSet<MakeupBooking> MakeupBookings { get; set; }
+        public DbSet<MakeUpBooking> MakeupBookings { get; set; }
         public DbSet<MakeupPayment> MakeupPayments { get; set; }
         
         protected override void OnModelCreating(ModelBuilder builder)
@@ -71,9 +71,9 @@ namespace BykStudio.data
                 new Room
                 {
                     RoomId = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-                    Name = "зал 1",
+                    Name = "Зал 1",
                     PricePerHour = 1000m,
-                    Description = "Spacious room with natural light",
+                    Description = "Зал | \r\n\r\nЗал в стиле минимализм. \r\nВ ваше пользование будет предоставлено:\r\n- циклорама \r\n- проф.оборудование \r\n- флаги\r\n- 2-х метровый кожаный диван\r\n- бумажные фоны\r\n- тканевые фоны \r\n- кресло \r\n- 4 стула \r\n- черная кожаная банкетка   \r\n- зеркало\r\n- рейл\r\n в данном зале блэкаут шторы",
                     Capacity = 10,
                     MainImageUrl = "/images/room7.jpg",
                     Photos = ["/images/room7.jpg", "/images/room7.jpg"],
@@ -82,7 +82,7 @@ namespace BykStudio.data
                 new Room
                 {
                     RoomId = Guid.Parse("22222222-2222-2222-2222-222222222222"),
-                    Name = "зал 2",
+                    Name = "Зал 2",
                     PricePerHour = 1500m,
                     Description = "Equipped with professional gear",
                     Capacity = 15,
@@ -107,19 +107,19 @@ namespace BykStudio.data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Configure one-to-one: MakeupBooking -> MakeupPayment
-            builder.Entity<MakeupBooking>()
+            builder.Entity<MakeUpBooking>()
                 .HasOne(mb => mb.Payment)
                 .WithOne(mp => mp.MakeupBooking)
                 .HasForeignKey<MakeupPayment>(mp => mp.MakeupBookingId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Unique index to prevent overlapping bookings
-            builder.Entity<MakeupBooking>()
+            builder.Entity<MakeUpBooking>()
                 .HasIndex(mb => new { mb.MakeupTableId, mb.StartTime, mb.EndTime })
                 .IsUnique();
 
             // Precision for money fields
-            builder.Entity<MakeupBooking>()
+            builder.Entity<MakeUpBooking>()
                 .Property(mb => mb.TotalPrice)
                 .HasPrecision(18, 2);
 
