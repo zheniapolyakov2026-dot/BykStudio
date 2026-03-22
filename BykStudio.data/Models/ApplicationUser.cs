@@ -8,5 +8,6 @@ namespace BykStudio.data.Models
 
         // Navigation properties
         public ICollection<Booking> Bookings { get; set; } = [];
+        public ICollection<MakeupBooking> MakeupBookings { get; set; } = new List<MakeupBooking>();
     }
 }

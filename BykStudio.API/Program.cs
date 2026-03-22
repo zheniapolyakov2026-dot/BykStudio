@@ -88,6 +88,34 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
+// Development-only endpoints
+if (app.Environment.IsDevelopment())
+{
+    app.MapPost("/dev/clear-users", async (ApplicationDbContext db, ILogger<Program> logger) =>
+    {
+        try
+        {
+            logger.LogInformation("Clearing users...");
+
+            // Load all users (and optionally roles) into memory
+            var users = await db.Users.ToListAsync();
+            int userCount = users.Count;
+
+            // Remove users – EF will cascade delete related Bookings and Payments
+            db.Users.RemoveRange(users);
+            await db.SaveChangesAsync();
+
+            logger.LogInformation("Deleted {Count} users.", userCount);
+            return Results.Ok(new { message = "Users cleared.", deleted = userCount });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error clearing users");
+            return Results.Problem(detail: ex.Message, statusCode: 500);
+        }
+    });
+}
+
 app.MapGet("/", () => Results.Ok(new { message = "BykStudio API is running", time = DateTime.UtcNow }));
 
 app.Use(async (context, next) =>

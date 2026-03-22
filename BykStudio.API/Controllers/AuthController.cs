@@ -73,7 +73,9 @@ namespace BykStudio.API.Controllers
             var registerResponse = new RegisterResponse
             {
                 Message = "User registered successfully. A confirmation email has been sent.",
-                ConfirmationUrl = env.IsDevelopment() ? callbackUrl : null
+                ConfirmationUrl = env.IsDevelopment() ? callbackUrl : null,
+                UserId = user.Id,
+                Code = encodedCode
             };
             return Ok(registerResponse);
         }
@@ -150,6 +152,7 @@ namespace BykStudio.API.Controllers
 
                 var user = await context.Users
                     .Include(u => u.Bookings).ThenInclude(b => b.Room)
+                    .Include(u => u.MakeupBookings).ThenInclude(mb => mb.MakeupTable)
                     .FirstOrDefaultAsync(u => u.Id == userId);
 
                 if (user == null) return NotFound();
@@ -165,6 +168,13 @@ namespace BykStudio.API.Controllers
                         StartTime = b.StartTime,
                         EndTime = b.EndTime,
                         TotalPrice = b.TotalPrice
+                    }).ToList(),
+                    MakeupBookings = user.MakeupBookings.Select(mb => new MakeupBookingSummaryDto
+                    {
+                        MakeupTableName = mb.MakeupTable?.Name,
+                        StartTime = mb.StartTime,
+                        EndTime = mb.EndTime,
+                        TotalPrice = mb.TotalPrice
                     }).ToList()
                 };
 

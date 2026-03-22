@@ -61,15 +61,53 @@ namespace BykStudio.Web.Services
             }
         }
 
-        public async Task<LoginResponse?> LoginAsync(Login model)
+        public async Task<LoginResult> LoginAsync(Login model)
         {
             var resp = await _http.PostAsJsonAsync("api/Auth/login", model);
-            if (!resp.IsSuccessStatusCode) return null;
+            if (resp.IsSuccessStatusCode)
+            {
+                var login = await resp.Content.ReadFromJsonAsync<LoginResponse>();
+                if (login?.Token != null)
+                    await _js.InvokeVoidAsync("localStorage.setItem", "authToken", login.Token);
+                return new LoginResult { Success = true, Token = login?.Token };
+            }
+            else
+            {
+                // Try to extract error message from response
+                var errorBody = await resp.Content.ReadAsStringAsync();
+                var errors = new List<string>();
 
-            var login = await resp.Content.ReadFromJsonAsync<LoginResponse>();
-            if (login?.Token != null)
-                await _js.InvokeVoidAsync("localStorage.setItem", "authToken", login.Token);
-            return login;
+                try
+                {
+                    var json = JsonDocument.Parse(errorBody).RootElement;
+                    // If it's a simple { "message": "..." } format
+                    if (json.TryGetProperty("message", out var msg))
+                    {
+                        errors.Add(msg.GetString() ?? "Login failed");
+                    }
+                    else if (json.ValueKind == JsonValueKind.Array)
+                    {
+                        // Identity error array
+                        foreach (var item in json.EnumerateArray())
+                        {
+                            if (item.TryGetProperty("description", out var desc))
+                                errors.Add(desc.GetString() ?? "Unknown error");
+                            else if (item.TryGetProperty("code", out var code))
+                                errors.Add($"Error code: {code}");
+                        }
+                    }
+                    else
+                    {
+                        errors.Add(errorBody);
+                    }
+                }
+                catch
+                {
+                    errors.Add("Invalid login attempt.");
+                }
+
+                return new LoginResult { Success = false, Errors = errors };
+            }
         }
 
         public async Task LogoutAsync() => await _js.InvokeVoidAsync("localStorage.removeItem", "authToken");

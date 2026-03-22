@@ -15,7 +15,10 @@ namespace BykStudio.data
         public DbSet<Room> Rooms { get; set; }
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<Payment> Payments { get; set; }
-
+        public DbSet<MakeupTable> MakeupTables { get; set; }
+        public DbSet<MakeupBooking> MakeupBookings { get; set; }
+        public DbSet<MakeupPayment> MakeupPayments { get; set; }
+        
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -85,6 +88,54 @@ namespace BykStudio.data
                     Capacity = 15,
                     MainImageUrl = "/images/room7.jpg",
                     Photos = ["room7.jpg", "room7.jpg"],
+                    IsAvailable = true
+                }
+            );
+
+            // Configure one-to-many: User -> MakeupBookings
+            builder.Entity<ApplicationUser>()
+                .HasMany(u => u.MakeupBookings)
+                .WithOne(mb => mb.User)
+                .HasForeignKey(mb => mb.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Configure one-to-many: MakeupTable -> MakeupBookings
+            builder.Entity<MakeupTable>()
+                .HasMany(mt => mt.MakeupBookings)
+                .WithOne(mb => mb.MakeupTable)
+                .HasForeignKey(mb => mb.MakeupTableId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure one-to-one: MakeupBooking -> MakeupPayment
+            builder.Entity<MakeupBooking>()
+                .HasOne(mb => mb.Payment)
+                .WithOne(mp => mp.MakeupBooking)
+                .HasForeignKey<MakeupPayment>(mp => mp.MakeupBookingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Unique index to prevent overlapping bookings
+            builder.Entity<MakeupBooking>()
+                .HasIndex(mb => new { mb.MakeupTableId, mb.StartTime, mb.EndTime })
+                .IsUnique();
+
+            // Precision for money fields
+            builder.Entity<MakeupBooking>()
+                .Property(mb => mb.TotalPrice)
+                .HasPrecision(18, 2);
+
+            builder.Entity<MakeupPayment>()
+                .Property(mp => mp.Amount)
+                .HasPrecision(18, 2);
+
+            // Seed the single makeup table
+            builder.Entity<MakeupTable>().HasData(
+                new MakeupTable
+                {
+                    MakeupTableId = Guid.Parse("33333333-3333-3333-3333-333333333333"),
+                    Name = "Гримерный стол",
+                    PricePerHour = 250m,
+                    Description = "Профессиональное рабочее место с LED‑подсветкой и барным стулом",
+                    MainImageUrl = "/images/room7.jpg",
                     IsAvailable = true
                 }
             );

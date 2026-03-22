@@ -1,0 +1,67 @@
+﻿@page "/confirm-email/{UserId}/{Code}"
+@rendermode InteractiveServer
+@using BykStudio.Web.Services
+@inject ProfileApiClient ProfileApiClient
+@inject NavigationManager NavigationManager
+
+<PageTitle>Confirming email...</PageTitle>
+
+<div style="text-align: center; margin-top: 50px;">
+    @if (isConfirming)
+    {
+        <p>Confirming your email, please wait...</p>
+    }
+    else if (confirmationSucceeded)
+    {
+        <p>Email confirmed successfully! Redirecting to login...</p>
+    }
+    else
+    {
+        <p style="color: red;">Email confirmation failed. @errorMessage</p>
+        <a href="/">Return to home</a>
+    }
+</div>
+
+@code {
+    [Parameter] public string UserId { get; set; } = string.Empty;
+    [Parameter] public string Code { get; set; } = string.Empty;
+
+    private bool isConfirming = true;
+    private bool confirmationSucceeded = false;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrEmpty(UserId) || string.IsNullOrEmpty(Code))
+        {
+            isConfirming = false;
+            errorMessage = "Invalid confirmation link.";
+            return;
+        }
+
+        try
+        {
+            // Call the backend confirmation endpoint
+            var response = await ProfileApiClient.HttpClient.GetAsync($"/api/Auth/confirm-email?userId={UserId}&code={Code}");
+            if (response.IsSuccessStatusCode)
+            {
+                confirmationSucceeded = true;
+                await Task.Delay(2000); // Let user see success message
+                NavigationManager.NavigateTo("/login");
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                errorMessage = error;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isConfirming = false;
+        }
+    }
+}

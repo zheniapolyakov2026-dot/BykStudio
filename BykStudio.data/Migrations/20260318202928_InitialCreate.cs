@@ -55,6 +55,22 @@ namespace BykStudio.data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "MakeupTables",
+                columns: table => new
+                {
+                    MakeupTableId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    PricePerHour = table.Column<decimal>(type: "numeric", nullable: false),
+                    IsAvailable = table.Column<bool>(type: "boolean", nullable: false),
+                    MainImageUrl = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MakeupTables", x => x.MakeupTableId);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Rooms",
                 columns: table => new
                 {
@@ -179,23 +195,36 @@ namespace BykStudio.data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "LoyaltyPoints",
+                name: "MakeupBookings",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    MakeupBookingId = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<string>(type: "text", nullable: false),
-                    Balance = table.Column<int>(type: "integer", nullable: false),
-                    LastUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    MakeupTableId = table.Column<Guid>(type: "uuid", nullable: false),
+                    StartTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    EndTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TotalPrice = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    GuestName = table.Column<string>(type: "text", nullable: true),
+                    GuestEmail = table.Column<string>(type: "text", nullable: true),
+                    GuestPhone = table.Column<string>(type: "text", nullable: true),
+                    IsGuestBooking = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_LoyaltyPoints", x => x.Id);
+                    table.PrimaryKey("PK_MakeupBookings", x => x.MakeupBookingId);
                     table.ForeignKey(
-                        name: "FK_LoyaltyPoints_AspNetUsers_UserId",
+                        name: "FK_MakeupBookings_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_MakeupBookings_MakeupTables_MakeupTableId",
+                        column: x => x.MakeupTableId,
+                        principalTable: "MakeupTables",
+                        principalColumn: "MakeupTableId",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -232,6 +261,28 @@ namespace BykStudio.data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "MakeupPayments",
+                columns: table => new
+                {
+                    MakeupPaymentId = table.Column<Guid>(type: "uuid", nullable: false),
+                    MakeupBookingId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Amount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    PaymentDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TransactionId = table.Column<string>(type: "text", nullable: true),
+                    IsSuccessful = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MakeupPayments", x => x.MakeupPaymentId);
+                    table.ForeignKey(
+                        name: "FK_MakeupPayments_MakeupBookings_MakeupBookingId",
+                        column: x => x.MakeupBookingId,
+                        principalTable: "MakeupBookings",
+                        principalColumn: "MakeupBookingId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Payments",
                 columns: table => new
                 {
@@ -253,47 +304,18 @@ namespace BykStudio.data.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "LoyaltyTransactions",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    UserId = table.Column<string>(type: "text", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Points = table.Column<int>(type: "integer", nullable: false),
-                    Type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    PaymentId = table.Column<Guid>(type: "uuid", nullable: true),
-                    BookingId = table.Column<Guid>(type: "uuid", nullable: true),
-                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_LoyaltyTransactions", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_LoyaltyTransactions_AspNetUsers_UserId",
-                        column: x => x.UserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_LoyaltyTransactions_Bookings_BookingId",
-                        column: x => x.BookingId,
-                        principalTable: "Bookings",
-                        principalColumn: "BookingId");
-                    table.ForeignKey(
-                        name: "FK_LoyaltyTransactions_Payments_PaymentId",
-                        column: x => x.PaymentId,
-                        principalTable: "Payments",
-                        principalColumn: "PaymentId");
-                });
+            migrationBuilder.InsertData(
+                table: "MakeupTables",
+                columns: new[] { "MakeupTableId", "Description", "IsAvailable", "MainImageUrl", "Name", "PricePerHour" },
+                values: new object[] { new Guid("33333333-3333-3333-3333-333333333333"), "Профессиональное рабочее место с LED‑подсветкой и барным стулом", true, "/images/room7.jpg", "Гримерный стол", 250m });
 
             migrationBuilder.InsertData(
                 table: "Rooms",
                 columns: new[] { "RoomId", "Capacity", "Description", "IsAvailable", "MainImageUrl", "Name", "Photos", "PricePerHour" },
                 values: new object[,]
                 {
-                    { new Guid("11111111-1111-1111-1111-111111111111"), 10, "Spacious room with natural light", true, "/images/room7.jpg", "Room A", "[\"room7.jpg\",\"room7.jpg\"]", 1000m },
-                    { new Guid("22222222-2222-2222-2222-222222222222"), 15, "Equipped with professional gear", true, "/images/room7.jpg", "Room B", "[\"room7.jpg\",\"room7.jpg\"]", 1500m }
+                    { new Guid("11111111-1111-1111-1111-111111111111"), 10, "Spacious room with natural light", true, "/images/room7.jpg", "зал 1", "[\"/images/room7.jpg\",\"/images/room7.jpg\"]", 1000m },
+                    { new Guid("22222222-2222-2222-2222-222222222222"), 15, "Equipped with professional gear", true, "/images/room7.jpg", "зал 2", "[\"room7.jpg\",\"room7.jpg\"]", 1500m }
                 });
 
             migrationBuilder.CreateIndex(
@@ -345,30 +367,21 @@ namespace BykStudio.data.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_LoyaltyPoints_UserId",
-                table: "LoyaltyPoints",
-                column: "UserId",
+                name: "IX_MakeupBookings_MakeupTableId_StartTime_EndTime",
+                table: "MakeupBookings",
+                columns: new[] { "MakeupTableId", "StartTime", "EndTime" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_LoyaltyTransactions_BookingId",
-                table: "LoyaltyTransactions",
-                column: "BookingId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_LoyaltyTransactions_CreatedAt",
-                table: "LoyaltyTransactions",
-                column: "CreatedAt");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_LoyaltyTransactions_PaymentId",
-                table: "LoyaltyTransactions",
-                column: "PaymentId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_LoyaltyTransactions_UserId",
-                table: "LoyaltyTransactions",
+                name: "IX_MakeupBookings_UserId",
+                table: "MakeupBookings",
                 column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MakeupPayments_MakeupBookingId",
+                table: "MakeupPayments",
+                column: "MakeupBookingId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Payments_BookingId",
@@ -396,19 +409,22 @@ namespace BykStudio.data.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "LoyaltyPoints");
-
-            migrationBuilder.DropTable(
-                name: "LoyaltyTransactions");
-
-            migrationBuilder.DropTable(
-                name: "AspNetRoles");
+                name: "MakeupPayments");
 
             migrationBuilder.DropTable(
                 name: "Payments");
 
             migrationBuilder.DropTable(
+                name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "MakeupBookings");
+
+            migrationBuilder.DropTable(
                 name: "Bookings");
+
+            migrationBuilder.DropTable(
+                name: "MakeupTables");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

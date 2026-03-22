@@ -137,6 +137,125 @@ namespace BykStudio.data.Migrations
                     b.ToTable("Bookings");
                 });
 
+            modelBuilder.Entity("BykStudio.data.Models.MakeupBooking", b =>
+                {
+                    b.Property<Guid>("MakeupBookingId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("EndTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("GuestEmail")
+                        .HasColumnType("text");
+
+                    b.Property<string>("GuestName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("GuestPhone")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsGuestBooking")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("MakeupTableId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("MakeupBookingId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("MakeupTableId", "StartTime", "EndTime")
+                        .IsUnique();
+
+                    b.ToTable("MakeupBookings");
+                });
+
+            modelBuilder.Entity("BykStudio.data.Models.MakeupPayment", b =>
+                {
+                    b.Property<Guid>("MakeupPaymentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("IsSuccessful")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("MakeupBookingId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("PaymentDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TransactionId")
+                        .HasColumnType("text");
+
+                    b.HasKey("MakeupPaymentId");
+
+                    b.HasIndex("MakeupBookingId")
+                        .IsUnique();
+
+                    b.ToTable("MakeupPayments");
+                });
+
+            modelBuilder.Entity("BykStudio.data.Models.MakeupTable", b =>
+                {
+                    b.Property<Guid>("MakeupTableId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("IsAvailable")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("MainImageUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<decimal>("PricePerHour")
+                        .HasColumnType("numeric");
+
+                    b.HasKey("MakeupTableId");
+
+                    b.ToTable("MakeupTables");
+
+                    b.HasData(
+                        new
+                        {
+                            MakeupTableId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            Description = "Профессиональное рабочее место с LED‑подсветкой и барным стулом",
+                            IsAvailable = true,
+                            MainImageUrl = "/images/room7.jpg",
+                            Name = "Гримерный стол",
+                            PricePerHour = 250m
+                        });
+                });
+
             modelBuilder.Entity("BykStudio.data.Models.Payment", b =>
                 {
                     b.Property<Guid>("PaymentId")
@@ -212,7 +331,7 @@ namespace BykStudio.data.Migrations
                             Description = "Spacious room with natural light",
                             IsAvailable = true,
                             MainImageUrl = "/images/room7.jpg",
-                            Name = "Room A",
+                            Name = "зал 1",
                             Photos = "[\"/images/room7.jpg\",\"/images/room7.jpg\"]",
                             PricePerHour = 1000m
                         },
@@ -223,7 +342,7 @@ namespace BykStudio.data.Migrations
                             Description = "Equipped with professional gear",
                             IsAvailable = true,
                             MainImageUrl = "/images/room7.jpg",
-                            Name = "Room B",
+                            Name = "зал 2",
                             Photos = "[\"room7.jpg\",\"room7.jpg\"]",
                             PricePerHour = 1500m
                         });
@@ -380,6 +499,36 @@ namespace BykStudio.data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("BykStudio.data.Models.MakeupBooking", b =>
+                {
+                    b.HasOne("BykStudio.data.Models.MakeupTable", "MakeupTable")
+                        .WithMany("MakeupBookings")
+                        .HasForeignKey("MakeupTableId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BykStudio.data.Models.ApplicationUser", "User")
+                        .WithMany("MakeupBookings")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MakeupTable");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BykStudio.data.Models.MakeupPayment", b =>
+                {
+                    b.HasOne("BykStudio.data.Models.MakeupBooking", "MakeupBooking")
+                        .WithOne("Payment")
+                        .HasForeignKey("BykStudio.data.Models.MakeupPayment", "MakeupBookingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MakeupBooking");
+                });
+
             modelBuilder.Entity("BykStudio.data.Models.Payment", b =>
                 {
                     b.HasOne("BykStudio.data.Models.Booking", "Booking")
@@ -445,11 +594,23 @@ namespace BykStudio.data.Migrations
             modelBuilder.Entity("BykStudio.data.Models.ApplicationUser", b =>
                 {
                     b.Navigation("Bookings");
+
+                    b.Navigation("MakeupBookings");
                 });
 
             modelBuilder.Entity("BykStudio.data.Models.Booking", b =>
                 {
                     b.Navigation("Payment");
+                });
+
+            modelBuilder.Entity("BykStudio.data.Models.MakeupBooking", b =>
+                {
+                    b.Navigation("Payment");
+                });
+
+            modelBuilder.Entity("BykStudio.data.Models.MakeupTable", b =>
+                {
+                    b.Navigation("MakeupBookings");
                 });
 
             modelBuilder.Entity("BykStudio.data.Models.Room", b =>

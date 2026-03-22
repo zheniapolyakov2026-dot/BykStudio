@@ -1,6 +1,9 @@
 ﻿@page "/makeup-booking"
 @layout FullScreenLayout
 @rendermode InteractiveServer
+@using BykStudio.data.DTOs
+@using BykStudio.Web.Services
+@inject MakeupTableService MakeupTableService
 @inject NavigationManager NavigationManager
 
 <div class="page-container" style="position: relative; height: 100vh; width: 100%; overflow: hidden;">
@@ -40,7 +43,7 @@
             @foreach (var table in TableList)
             {
                 <div class="glass-card">
-                    <img src="@table.ImageUrl"
+                    <img src="@table.MainImageUrl"
                          style="width: 100%; height: clamp(245px, 31.5vh, 415px); object-fit: cover;"
                          alt="@table.Name" />
                     <div style="padding: clamp(30px, 4vw, 46px) clamp(26px, 3.6vw, 46px) clamp(36px, 4.5vw, 50px);">
@@ -127,30 +130,24 @@
 </style>
 
 @code {
-    // Полный класс с всеми свойствами
-    public class MakeupTable
-    {
-        public string Name { get; set; } = "";
-        public decimal PricePerHour { get; set; }
-        public string Description { get; set; } = "";
-        public string ImageUrl { get; set; } = "";
-    }
+    private List<MakeupTableDto> TableList { get; set; } = new();
 
-    private List<MakeupTable> TableList { get; set; } = new();
-
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        TableList = new List<MakeupTable>
+        try
         {
-            new MakeupTable
+            var tables = await MakeupTableService.GetAllMakeupTablesAsync();
+            if (tables != null)
             {
-                Name = "Стол визажиста",
-                PricePerHour = 250,
-                Description = "Профессиональное рабочее место с правильным освещением для создания идеального образа. Зеркало с LED-подсветкой, удобный барный стул.",
-                ImageUrl = "/images/room7.jpg"
+                TableList = tables;
             }
-        };
+        }
+        catch (Exception ex)
+        {
+            // Log error (optional)
+            Console.WriteLine($"Error loading makeup tables: {ex}");
+        }
     }
 
-    private void GoToCalendar() => NavigationManager.NavigateTo("/calendar");
+    private void GoToCalendar() => NavigationManager.NavigateTo("/makeup-calendar");
 }

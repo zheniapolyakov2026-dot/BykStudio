@@ -10,6 +10,7 @@ namespace BykStudio.data.DTOs
         public string Email { get; set; } = string.Empty;
         public string? PhoneNumber { get; set; }
         public List<BookingSummaryDto> Bookings { get; set; } = new();
+        public List<MakeupBookingSummaryDto> MakeupBookings { get; set; } = new();
     }
 
     public class BookingSummaryDto
@@ -20,11 +21,11 @@ namespace BykStudio.data.DTOs
         public decimal TotalPrice { get; set; }
     }
 
-    public class TransactionSummaryDto
+    public class MakeupBookingSummaryDto
     {
-        public DateTime CreatedAt { get; set; }
-        public int Points { get; set; }
-        public string Type { get; set; } = string.Empty;
-        public string? Description { get; set; }
+        public string? MakeupTableName { get; set; }
+        public DateTime StartTime { get; set; }
+        public DateTime EndTime { get; set; }
+        public decimal TotalPrice { get; set; }
     }
 }

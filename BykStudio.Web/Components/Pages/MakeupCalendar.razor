@@ -1,0 +1,272 @@
+﻿@page "/makeup-calendar"
+@layout FullScreenLayout
+@rendermode InteractiveServer
+@inject NavigationManager NavigationManager
+@inject MakeupBookingService MakeupBookingService
+@inject MakeupTableService MakeupTableService
+@inject IJSRuntime JS
+@using BykStudio.Web.Services
+@using BykStudio.data.DTOs
+@using System.Globalization
+@using Radzen
+@using Radzen.Blazor
+
+<style>
+    .booking-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 40px;
+        padding: 20px;
+        background-color: #ffffff; /* */
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        max-width: 900px;
+        margin: 0 auto;
+        font-family: sans-serif;
+    }
+
+    .calendar-section {
+        flex: 1;
+        min-width: 300px;
+    }
+
+    .time-section {
+        flex: 1;
+        min-width: 300px;
+    }
+
+    .time-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .time-slot {
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #dee2e6; /* */
+        background-color: #ffffff; /* */
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.2s ease;
+        font-weight: bold;
+    }
+
+        .time-slot:hover:not(:disabled) {
+            border-color: #007bff;
+            color: #007bff;
+        }
+
+        .time-slot.booked {
+            background-color: #ff6b6b; /* */
+            color: white;
+            border-color: #ff6b6b;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .time-slot.past {
+            background-color: #e9ecef; /* */
+            color: #adb5bd;
+            cursor: not-allowed;
+            border-color: #e9ecef;
+        }
+
+        .time-slot.selected {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+    h3 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        color: #333;
+    }
+</style>
+
+<!-- Кинематографичный фон (точно как на Home и Rooms) -->
+<div style="position: relative; height: 100vh; width: 100%; overflow: hidden;">
+    <img src="/images/room7.jpg"
+         style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1;"
+         alt="Studio" />
+
+    <!-- Белый оверлей -->
+    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: white; opacity: 0.2; z-index: 2;"></div>
+
+    <!-- Затемнение фона -->
+    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+                background: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.95));
+                z-index: 3;"></div>
+
+    <!-- Контент -->
+    <div style="position: relative; z-index: 4; height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;">
+        <div style="width: 100%; max-width: 960px;">
+            <!-- Кнопка назад -->
+            <button @onclick="GoBack"
+                    style="position: absolute; top: 30px; left: 30px; background: transparent; border: none; color: #fff; font-size: 28px; cursor: pointer; z-index: 10;">
+                ← Назад
+            </button>
+
+            <h1 style="color: #ffffff; text-align: center; font-size: 42px; margin-bottom: 30px;">
+                Бронирование гримерного стола
+            </h1>
+
+            <!-- ВАШ ТОЧНЫЙ КАЛЕНДАРЬ (ничего не изменено) -->
+            <div class="booking-wrapper">
+                <div class="calendar-section">
+                    <h3>📅 Выберите день</h3>
+                    <RadzenDatePicker TValue="DateTime?"
+                                      Inline="true"
+                                      Value="selectedDate"
+                                      Change="@OnDateSelected"
+                                      DateRender="@OnDateRender"
+                                      Culture="@(new CultureInfo("ru-RU"))" />
+                </div>
+
+                <div class="time-section">
+                    @if (selectedDate.HasValue)
+                    {
+                        <h3>⏰ Доступное время на @selectedDate.Value.ToString("dd MMMM", new CultureInfo("ru-RU"))</h3>
+
+                        <div class="time-grid">
+                            @foreach (var time in GetTimeSlotsForDate(selectedDate.Value))
+                            {
+                                bool isBooked = IsTimeBooked(time);
+                                bool isPast = time < DateTime.Now;
+                                bool isSelected = selectedTime == time;
+
+                                <button class="time-slot @(isBooked ? "booked" : isPast ? "past" : isSelected ? "selected" : "")"
+                                        disabled="@(isBooked || isPast)"
+                                        @onclick="() => OnTimeSelected(time)">
+                                    @time.ToString("HH:mm")
+                                </button>
+                            }
+                        </div>
+
+                        @if (selectedTime.HasValue)
+                        {
+                            <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 8px;">
+                                <strong>Выбрано:</strong> @selectedTime.Value.ToString("dd MMMM в HH:mm", new CultureInfo("ru-RU"))
+                                <br />
+                                <RadzenButton Text="Подтвердить бронь" ButtonStyle="ButtonStyle.Primary" Class="mt-3" Click="@ConfirmBooking" />
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div style="color: #6c757d; margin-top: 20px;">
+                            👈 Пожалуйста, выберите дату в календаре слева, чтобы увидеть свободные часы.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private Guid? _makeupTableId;
+    private DateTime? selectedDate = DateTime.Today;
+    private DateTime? selectedTime = null;
+
+    // For demo, we don't have real booked slots yet – you can later replace with API call
+    private List<DateTime> _bookedSlots = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var table = await MakeupTableService.GetMakeupTableAsync();
+        if (table != null)
+        {
+            _makeupTableId = table.MakeupTableId;
+        }
+        else
+        {
+            // Handle error – maybe redirect
+            NavigationManager.NavigateTo("/not-found");
+        }
+
+        // Optional: load already booked slots for the next few days
+        // await LoadBookedSlots();
+    }
+
+    private async Task ConfirmBooking()
+    {
+        if (!selectedTime.HasValue || !_makeupTableId.HasValue) return;
+
+        var request = new CreateMakeupBookingRequest
+        {
+            MakeupTableId = _makeupTableId.Value,
+            StartTime = selectedTime.Value,
+            EndTime = selectedTime.Value.AddHours(1) // assuming 1‑hour slots
+        };
+
+        try
+        {
+            var bookingResult = await MakeupBookingService.CreateMakeupBookingAsync(request);
+
+            if (bookingResult == null)
+            {
+                await JS.InvokeVoidAsync("alert", "Ошибка при создании брони");
+                return;
+            }
+
+            if (bookingResult.RequiresPayment)
+            {
+                var paymentResult = await MakeupBookingService.InitiateMakeupPaymentAsync(bookingResult.BookingId);
+                if (paymentResult != null)
+                {
+                    NavigationManager.NavigateTo(paymentResult.PaymentUrl, forceLoad: true);
+                }
+                else
+                {
+                    await JS.InvokeVoidAsync("alert", "Не удалось инициировать оплату");
+                }
+            }
+            else if (bookingResult.RequiresContactInfo)
+            {
+                // You might want to redirect to a contact info page instead of alert
+                await JS.InvokeVoidAsync("alert", bookingResult.Message ?? "Введите контактные данные");
+                // Optionally: NavigationManager.NavigateTo($"/makeup-booking/contact/{bookingResult.BookingId}");
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("alert", "Бронь создана! " + (bookingResult.Message ?? ""));
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", "Ошибка: " + ex.Message);
+        }
+    }
+
+    void OnDateSelected(DateTime? date) { selectedDate = date; selectedTime = null; }
+    void OnTimeSelected(DateTime time) => selectedTime = time;
+
+    void OnDateRender(DateRenderEventArgs args)
+    {
+        if (args.Date.Date < DateTime.Today) args.Disabled = true;
+    }
+
+    List<DateTime> GetTimeSlotsForDate(DateTime date)
+    {
+        var slots = new List<DateTime>();
+        var startTime = date.Date.AddHours(9);
+        var endTime = date.Date.AddHours(21);
+        while (startTime <= endTime)
+        {
+            slots.Add(startTime);
+            startTime = startTime.AddHours(1);
+        }
+        return slots;
+    }
+
+    bool IsTimeBooked(DateTime time)
+    {
+        // Replace with real check against _bookedSlots
+        return _bookedSlots.Contains(time);
+    }
+
+    private void GoBack() => NavigationManager.NavigateTo("/makeup-booking");
+}

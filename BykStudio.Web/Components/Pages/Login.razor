@@ -61,18 +61,23 @@
 
     private async Task HandleLogin()
     {
+        errorMessage = null;
         Console.WriteLine("=== HandleLogin started ===");
-        var response = await AuthService.LoginAsync(model);
-        Console.WriteLine($"LoginAsync returned: {(response != null ? "non-null" : "null")}");
+        var result = await AuthService.LoginAsync(model);
+        Console.WriteLine($"LoginAsync returned: {(result != null ? "non-null" : "null")}");
 
-        if (response != null)
+        if (result.Success)
         {
             Console.WriteLine("Navigating to /profile");
+            // Token is already stored in localStorage by AuthService
             NavigationManager.NavigateTo("/profile", true);
         }
         else
         {
-            errorMessage = "Invalid email or password.";
+            // Combine any error messages returned from the server
+            errorMessage = result.Errors != null && result.Errors.Any()
+                ? string.Join(" ", result.Errors)
+                : "Invalid login attempt.";
             Console.WriteLine("Login failed, error message set");
         }
     }
