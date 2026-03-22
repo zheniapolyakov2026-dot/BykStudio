@@ -61,9 +61,9 @@
                             </span>
                         </div>
                         <p style="color: rgba(255,255,255,0.95);
-                                line-height: 1.6;
-                                margin-bottom: 24px;
-                                font-size: clamp(15.5px, 2.4vw, 18.5px);">
+                                      line-height: 1.6;
+                                      margin-bottom: 24px;
+                                      font-size: clamp(15.5px, 2.4vw, 18.5px);">
                             @table.Description
                         </p>
                         <button @onclick="GoToCalendar" class="btn-primary">Забронировать</button>
@@ -115,17 +115,22 @@
         }
 
     .btn-primary {
-        width: 100%;
-        padding: clamp(16px, 2.8vw, 25px);
-        font-size: clamp(17px, 2.8vw, 22.5px);
-        font-weight: 700;
-        background: white;
-        color: #111;
-        border: none;
-        border-radius: 50px;
-        cursor: pointer;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.25);
-        transition: all 0.3s ease;
+        .btn-primary {
+            width: 100%;
+            padding: clamp(16px, 2.8vw, 25px) clamp(24px, 4vw, 40px); /* ← увеличили горизонтальный padding */
+            font-size: clamp(17px, 2.8vw, 22.5px);
+            font-weight: 700;
+            background: white;
+            color: #111;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+            transition: all 0.3s ease;
+            white-space: nowrap; /* ← текст не переносится */
+            overflow: hidden; /* ← если всё же вылезет — обрежется */
+            text-overflow: ellipsis; /* ← … в конце, если не помещается */
+        }
     }
 
         .btn-primary:hover {
