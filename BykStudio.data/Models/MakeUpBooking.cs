@@ -1,30 +1,41 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Text;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BykStudio.data.Models
 {
     public class MakeUpBooking
     {
         [Key]
-        public Guid RoomId { get; set; } = Guid.NewGuid();
+        public Guid MakeupBookingId { get; set; } = Guid.NewGuid();
 
-        [Required, MaxLength(100)]
-        public string Name { get; set; } = string.Empty;
-
-        [MaxLength(500)]
-        public string? Description { get; set; }
+        // Foreign keys
+        public string UserId { get; set; } = string.Empty;
+        public Guid MakeupTableId { get; set; }
 
         [Required]
-        public decimal PricePerHour { get; set; }
+        public DateTime StartTime { get; set; }
 
-        public int Capacity { get; set; }
+        [Required]
+        public DateTime EndTime { get; set; }
 
-        public bool IsAvailable { get; set; } = true;
-        public string MainImageUrl { get; set; } = string.Empty;
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal TotalPrice { get; set; }
 
-        // Navigation property
-        public ICollection<Booking> Bookings { get; set; } = [];
+        public BookingStatus Status { get; set; } = BookingStatus.Pending;
+
+        // Navigation
+        [ForeignKey(nameof(UserId))]
+        public ApplicationUser User { get; set; } = null!;
+
+        [ForeignKey(nameof(MakeupTableId))]
+        public MakeupTable MakeupTable { get; set; } = null!;
+
+        public MakeupPayment? Payment { get; set; }
+
+        // Guest info
+        public string? GuestName { get; set; }
+        public string? GuestEmail { get; set; }
+        public string? GuestPhone { get; set; }
+        public bool IsGuestBooking { get; set; }
     }
 }
