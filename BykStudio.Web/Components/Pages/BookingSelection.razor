@@ -12,22 +12,27 @@
     <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: white; opacity: 0.07; z-index: 2;"></div>
 
     <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-                background: linear-gradient(to bottom, rgba(0,0,0,0.18), rgba(0,0,0,0.65));
-                z-index: 3;"></div>
+    background: linear-gradient(to bottom, rgba(0,0,0,0.18), rgba(0,0,0,0.65));
+    z-index: 3;"></div>
 
     <div class="hover-dark-overlay"></div>
 
     <div style="position: relative; z-index: 4; height: 100vh;
-                display: flex; flex-direction: column; justify-content: center; align-items: center;
-                padding: 0 20px;">
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        padding: 0 20px;">
+
+        <!-- Кнопка Назад — теперь в едином стиле -->
+        <button @onclick="GoBack" class="back-button">
+            Назад
+        </button>
 
         <h1 style="color: #ffffff;
-                   font-size: clamp(35px, 6vw, 70px);
-                   font-weight: 900;
-                   letter-spacing: -1px;
-                   text-shadow: 0 18px 55px rgba(0,0,0,0.9);
-                   margin-bottom: clamp(40px, 6vh, 70px);
-                   text-align: center;">
+            font-size: clamp(35px, 6vw, 70px);
+            font-weight: 900;
+            letter-spacing: -1px;
+            text-shadow: 0 18px 55px rgba(0,0,0,0.9);
+            margin-bottom: clamp(40px, 6vh, 70px);
+            text-align: center;">
             Что забронировать?
         </h1>
 
@@ -50,10 +55,6 @@
             </div>
 
         </div>
-
-        <button @onclick="GoBack" class="back-button" style="margin-top: clamp(40px, 7vh, 80px);">
-            Вернуться назад
-        </button>
     </div>
 </div>
 
@@ -99,24 +100,27 @@
             box-shadow: 0 40px 90px rgba(224,192,112,0.35);
         }
 
+    /* ====================== ЕДИНЫЙ СТИЛЬ КНОПКИ "НАЗАД" ====================== */
     .back-button {
-        padding: clamp(12px, 2vw, 18px) clamp(30px, 4vw, 50px);
-        font-size: clamp(16px, 2vw, 20px);
-        font-weight: 600;
-        border: 2px solid rgba(255,255,255,0.6);
+        position: absolute;
+        top: 30px;
+        left: 30px;
+        padding: 12px 24px;
+        font-size: 18px;
+        font-weight: 700;
         color: white;
+        background: rgba(0,0,0,0.4);
+        border: 2px solid rgba(255,255,255,0.6);
         border-radius: 50px;
-        background: rgba(255,255,255,0.05);
-        backdrop-filter: blur(10px);
-        cursor: pointer;
+        backdrop-filter: blur(12px);
+        z-index: 10;
         transition: all 0.3s ease;
     }
 
         .back-button:hover {
-            background: white;
+            background: #e0c070;
             color: #111;
-            border-color: white;
-            transform: scale(1.05);
+            border-color: #e0c070;
         }
 </style>
 

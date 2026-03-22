@@ -3,6 +3,7 @@ using System;
 using BykStudio.data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BykStudio.data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260316182805_RoomNameChange")]
+    partial class RoomNameChange
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -277,11 +280,11 @@ namespace BykStudio.data.Migrations
                         {
                             RoomId = new Guid("11111111-1111-1111-1111-111111111111"),
                             Capacity = 10,
-                            Description = "Зал | \r\n\r\nЗал в стиле минимализм. \r\nВ ваше пользование будет предоставлено:\r\n- циклорама \r\n- проф.оборудование \r\n- флаги\r\n- 2-х метровый кожаный диван\r\n- бумажные фоны\r\n- тканевые фоны \r\n- кресло \r\n- 4 стула \r\n- черная кожаная банкетка   \r\n- зеркало\r\n- рейл\r\n в данном зале блэкаут шторы",
+                            Description = "Spacious room with natural light",
                             IsAvailable = true,
                             MainImageUrl = "/images/room7.jpg",
-                            Name = "Зал 1",
-                            Photos = "[\"/images/room7.jpg\",\"/images/room7.jpg\"]",
+                            Name = "зал 1",
+                            Photos = "[\"room7.jpg\",\"room7.jpg\"]",
                             PricePerHour = 1000m
                         },
                         new
@@ -291,7 +294,7 @@ namespace BykStudio.data.Migrations
                             Description = "Equipped with professional gear",
                             IsAvailable = true,
                             MainImageUrl = "/images/room7.jpg",
-                            Name = "Зал 2",
+                            Name = "зал 2",
                             Photos = "[\"room7.jpg\",\"room7.jpg\"]",
                             PricePerHour = 1500m
                         });
