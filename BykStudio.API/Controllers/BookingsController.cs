@@ -1,7 +1,6 @@
 ﻿using System.Security.Claims;
 using BykStudio.data;
 using BykStudio.data.DTOs;
-using BykStudio.data.Interfaces;
 using BykStudio.data.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,14 +12,11 @@ namespace BykStudio.API.Controllers
     public class BookingsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        private readonly ILoyaltyService _loyaltyService;
 
         public BookingsController(
-            ApplicationDbContext context,
-            ILoyaltyService loyaltyService)
+            ApplicationDbContext context)
         {
             _context = context;
-            _loyaltyService = loyaltyService;
         }
 
         // Public endpoint - no auth required for creating booking
@@ -83,63 +79,16 @@ namespace BykStudio.API.Controllers
                 _context.Bookings.Add(booking);
                 await _context.SaveChangesAsync();
 
-                // 6. Apply loyalty points if user is logged in and wants to redeem
-                int pointsRedeemed = 0;
-                if (!isGuest && request.RedeemPoints > 0)
-                {
-                    try
-                    {
-                        // Attempt to redeem points (this will throw if insufficient)
-                        await _loyaltyService.RedeemPointsAsync(userId, request.RedeemPoints, booking.BookingId);
-
-                        // Calculate discount (1 point = 1 ruble)
-                        decimal discount = request.RedeemPoints;
-                        if (discount > totalPrice)
-                        {
-                            // Points exceed price – adjust discount to price and refund excess? For simplicity, we'll cap at price.
-                            discount = totalPrice;
-                            pointsRedeemed = (int)totalPrice; // but we already redeemed full points, so we need to handle this better.
-                            // Better: redeem only up to price, but the service already redeemed full points.
-                            // This is a flaw. Let's handle by redeeming min(points, price) instead.
-                            // We'll restructure: calculate redeemable points first.
-                        }
-
-                        // Actually, we should calculate the maximum redeemable points based on price.
-                        int maxRedeemable = (int)totalPrice; // since 1 point = 1 ruble
-                        int pointsToRedeem = Math.Min(request.RedeemPoints, maxRedeemable);
-
-                        if (pointsToRedeem > 0)
-                        {
-                            await _loyaltyService.RedeemPointsAsync(userId, pointsToRedeem, booking.BookingId);
-                            totalPrice -= pointsToRedeem;
-                            pointsRedeemed = pointsToRedeem;
-                        }
-                    }
-                    catch (InvalidOperationException ex)
-                    {
-                        // Insufficient points – proceed without discount
-                        // Optionally log and inform client via response message
-                    }
-                }
-
-                // Update booking with final price and points redeemed
-                if (pointsRedeemed > 0)
-                {
-                    booking.TotalPrice = totalPrice;
-                    await _context.SaveChangesAsync();
-                }
-
                 await transaction.CommitAsync();
 
-                // 7. Return appropriate response
+                // 6. Return appropriate response
                 if (isGuest)
                 {
                     return Ok(new
                     {
                         booking.BookingId,
                         TotalPrice = totalPrice,
-                        PointsRedeemed = pointsRedeemed,
-                        Message = "Please provide contact information to complete booking",
+                        Message = "Пожалуйста, предоставьте информацию, чтобы завершить бронирование",
                         RequiresContactInfo = true
                     });
                 }
@@ -148,7 +97,6 @@ namespace BykStudio.API.Controllers
                 {
                     booking.BookingId,
                     TotalPrice = totalPrice,
-                    PointsRedeemed = pointsRedeemed,
                     RequiresPayment = true
                 });
             }

@@ -14,18 +14,15 @@ namespace BykStudio.API.Controllers
     public class PaymentController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        private readonly ILoyaltyService _loyaltyService;
         private readonly ILogger<PaymentController> _logger;
         private readonly ITinkoffPaymentService _tinkoffPaymentService;
 
         public PaymentController(
             ApplicationDbContext context,
-            ILoyaltyService loyaltyService,
             ITinkoffPaymentService tinkoffPaymentService,
             ILogger<PaymentController> logger)
         {
             _context = context;
-            _loyaltyService = loyaltyService;
             _tinkoffPaymentService = tinkoffPaymentService;
             _logger = logger;
         }
@@ -64,15 +61,6 @@ namespace BykStudio.API.Controllers
                     payment.IsSuccessful = true;
                     payment.PaymentDate = DateTime.UtcNow;
                     payment.Booking.Status = BookingStatus.Confirmed;
-
-                    // Award loyalty points if user is registered
-                    if (!payment.Booking.IsGuestBooking)
-                    {
-                        await _loyaltyService.EarnPointsAsync(
-                            payment.Booking.UserId,
-                            payment.Amount,
-                            payment.PaymentId);
-                    }
                     break;
 
                 case "REJECTED":
@@ -81,10 +69,6 @@ namespace BykStudio.API.Controllers
                     break;
 
                 case "REFUNDED":
-                    if (!payment.Booking.IsGuestBooking)
-                    {
-                        await _loyaltyService.RefundPointsAsync(payment.PaymentId, payment.Amount);
-                    }
                     payment.Booking.Status = BookingStatus.Cancelled;
                     break;
             }

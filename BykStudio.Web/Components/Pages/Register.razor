@@ -62,15 +62,6 @@
                     Зарегистрироваться
                 </button>
             </EditForm>
-            @if (!string.IsNullOrEmpty(confirmationUrl))
-            {
-                <div style="margin-top:20px; color:green; text-align:center;">
-                    <strong>Регистрация успешна!</strong><br />
-                    <a href="@confirmationUrl" target="_blank" style="color:#e0c070; text-decoration:underline;">
-                        → Кликните здесь, чтобы подтвердить email (только для разработки)
-                    </a>
-                </div>
-            }
             @if (!string.IsNullOrEmpty(errorMessage))
             {
                 <div style="margin-top:20px; padding:10px; background-color:#f8d7da; color:#721c24; border:1px solid #f5c6cb; border-radius:5px; text-align:center;">
@@ -83,7 +74,6 @@
 
 @code {
     private BykStudio.data.DTOs.Register model = new();
-    private string? confirmationUrl;
     private string? errorMessage;
 
     private void GoBack() => NavigationManager.NavigateTo("/");
@@ -94,7 +84,7 @@
         var result = await AuthService.RegisterAsync(model);
         if (result.Success)
         {
-            confirmationUrl = result.Response?.ConfirmationUrl;
+            NavigationManager.NavigateTo("/login");
         }
         else
         {

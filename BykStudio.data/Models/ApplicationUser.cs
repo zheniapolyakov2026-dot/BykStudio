@@ -8,6 +8,5 @@ namespace BykStudio.data.Models
 
         // Navigation properties
         public ICollection<Booking> Bookings { get; set; } = [];
-        public LoyaltyPoints? LoyaltyPoints { get; set; }
     }
 }
