@@ -68,7 +68,7 @@ namespace BykStudio.API.Controllers
                 var booking = new Booking
                 {
                     RoomId = request.RoomId,
-                    UserId = isGuest ? "guest-" + Guid.NewGuid().ToString() : userId,
+                    UserId = isGuest ? null : userId,
                     StartTime = request.StartTime,
                     EndTime = request.EndTime,
                     TotalPrice = totalPrice, // will be adjusted if points redeemed
@@ -93,11 +93,13 @@ namespace BykStudio.API.Controllers
                     });
                 }
 
-                return Ok(new
+                return Ok(new CreateBookingResponse
                 {
-                    booking.BookingId,
+                    BookingId = booking.BookingId,
                     TotalPrice = totalPrice,
-                    RequiresPayment = true
+                    Message = isGuest ? "Пожалуйста, предоставьте информацию для завершения бронирования" : null,
+                    RequiresContactInfo = isGuest,
+                    RequiresPayment = !isGuest
                 });
             }
             catch (Exception)

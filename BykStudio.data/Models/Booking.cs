@@ -9,7 +9,7 @@ namespace BykStudio.data.Models
         public Guid BookingId { get; set; } = Guid.NewGuid();
 
         // Foreign keys
-        public string UserId { get; set; } = string.Empty;        // IdentityUser uses string Id
+        public string? UserId { get; set; } = string.Empty;        // IdentityUser uses string Id
         public Guid RoomId { get; set; }
 
         [Required]

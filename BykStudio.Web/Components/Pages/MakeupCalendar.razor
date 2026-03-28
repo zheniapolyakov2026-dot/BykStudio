@@ -79,6 +79,12 @@
             border-color: #007bff;
         }
 
+        .time-slot.selected-interval {
+            background-color: #90ee90; /* light green */
+            border-color: #2e8b57;
+            color: #2c3e50;
+        }
+
     h3 {
         margin-top: 0;
         margin-bottom: 20px;
@@ -131,26 +137,52 @@
                         <h3>⏰ Доступное время на @selectedDate.Value.ToString("dd MMMM", new CultureInfo("ru-RU"))</h3>
 
                         <div class="time-grid">
-                            @foreach (var time in GetTimeSlotsForDate(selectedDate.Value))
+                            @foreach (var utcTime in GetTimeSlotsForDate(selectedDate.Value))
                             {
-                                bool isBooked = IsTimeBooked(time);
-                                bool isPast = time < DateTime.Now;
-                                bool isSelected = selectedTime == time;
+                                var localTime = utcTime.ToLocalTime();   // show local time
+                                bool isStartTimeFree = IsSlotAvailable(utcTime);
+                                bool isSelected = selectedStartTimeUtc == utcTime;
+                                bool isInSelectedInterval = selectedStartTimeUtc.HasValue &&
+                                                            utcTime >= selectedStartTimeUtc.Value &&
+                                                            utcTime < selectedStartTimeUtc.Value.AddHours(selectedDuration);
 
-                                <button class="time-slot @(isBooked ? "booked" : isPast ? "past" : isSelected ? "selected" : "")"
-                                        disabled="@(isBooked || isPast)"
-                                        @onclick="() => OnTimeSelected(time)">
-                                    @time.ToString("HH:mm")
+                                <button class="time-slot @(isStartTimeFree ? "" : "booked")
+                                                        @(isSelected ? "selected" : "")
+                                                        @(isInSelectedInterval ? "selected-interval" : "")"
+                                        disabled="@(!isStartTimeFree)"
+                                        @onclick="() => OnTimeSelected(utcTime)">
+                                    @localTime.ToString("HH:mm")
                                 </button>
                             }
                         </div>
 
-                        @if (selectedTime.HasValue)
+                        @if (selectedStartTimeUtc.HasValue)
                         {
+                            var localStart = selectedStartTimeUtc.Value.ToLocalTime();
                             <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 8px;">
-                                <strong>Выбрано:</strong> @selectedTime.Value.ToString("dd MMMM в HH:mm", new CultureInfo("ru-RU"))
-                                <br />
-                                <RadzenButton Text="Подтвердить бронь" ButtonStyle="ButtonStyle.Primary" Class="mt-3" Click="@ConfirmBooking" />
+                                <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
+                                    <div>
+                                        <label>Продолжительность:</label>
+                                        <select @bind="selectedDuration">
+                                            @for (int i = 1; i <= MaxAvailableHours; i++)
+                                            {
+                                                <option value="@i">@i час@(i > 1 ? "а" : "")</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <strong>Цена:</strong> @TotalPrice ₽
+                                    </div>
+                                </div>
+                                <div style="margin-top: 10px;">
+                                    <strong>Выбрано:</strong> @localStart.ToString("dd MMMM в HH:mm", new CultureInfo("ru-RU"))
+                                    (@selectedDuration часа)
+                                </div>
+                                <RadzenButton Text="Подтвердить бронь"
+                                              ButtonStyle="ButtonStyle.Primary"
+                                              Class="mt-3"
+                                              Click="@ConfirmBooking"
+                                              Disabled="@(!IsIntervalFree(selectedStartTimeUtc.Value, selectedDuration))" />
                             </div>
                         }
                     }
@@ -167,82 +199,135 @@
 </div>
 
 @code {
-    private Guid? _makeupTableId;
+    private MakeupTableDto? _makeupTable;       // store full table data
     private DateTime? selectedDate = DateTime.Today;
-    private DateTime? selectedTime = null;
+    private DateTime? selectedStartTimeUtc = null;
+    private int selectedDuration = 1;            // default 1 hour
+    private List<BookedSlotDto> _bookedSlots = new();
 
-    // For demo, we don't have real booked slots yet – you can later replace with API call
-    private List<DateTime> _bookedSlots = new();
+    // Computed total price
+    private decimal TotalPrice => (selectedDuration * (_makeupTable?.PricePerHour ?? 0));
+
+    // Maximum hours available from the selected start time (based on bookings and closing time)
+    private int MaxAvailableHours => selectedStartTimeUtc.HasValue
+        ? GetMaxAvailableHours(selectedStartTimeUtc.Value)
+        : 1;
 
     protected override async Task OnInitializedAsync()
     {
-        var table = await MakeupTableService.GetMakeupTableAsync();
-        if (table != null)
+        _makeupTable = await MakeupTableService.GetMakeupTableAsync();
+        if (_makeupTable == null)
         {
-            _makeupTableId = table.MakeupTableId;
-        }
-        else
-        {
-            // Handle error – maybe redirect
             NavigationManager.NavigateTo("/not-found");
+            return;
         }
 
-        // Optional: load already booked slots for the next few days
-        // await LoadBookedSlots();
+        await LoadBookedSlotsForDate(selectedDate!.Value);
     }
 
+    private async Task LoadBookedSlotsForDate(DateTime date)
+    {
+        // Convert the local date to UTC start and end (the exact UTC day)
+        var startUtc = date.Date.ToUniversalTime();
+        var endUtc = startUtc.AddDays(1);
+        _bookedSlots = await MakeupBookingService.GetBookedSlotsAsync(startUtc, endUtc);
+    }
+
+    private async Task OnDateSelected(DateTime? date)
+    {
+        selectedDate = date;
+        selectedStartTimeUtc = null;
+        if (date.HasValue)
+        {
+            await LoadBookedSlotsForDate(date.Value);
+            StateHasChanged();
+        }
+    }
+
+    // Called when start time is clicked
+    private void OnTimeSelected(DateTime utcTime)
+    {
+        selectedStartTimeUtc = utcTime;
+        // Cap the selected duration to the maximum available from this start time
+        var maxAvailable = MaxAvailableHours;
+        if (selectedDuration > maxAvailable) selectedDuration = maxAvailable;
+        StateHasChanged();
+    }
+
+    // Returns the maximum number of hours we can book from startUtc without overlapping any booking,
+    // and not exceeding the closing time (21:00 local).
+    private int GetMaxAvailableHours(DateTime startUtc)
+    {
+        // If the start time itself is not free, return 0
+        if (!IsSlotAvailable(startUtc)) return 0;
+
+        var startLocal = startUtc.ToLocalTime();
+        var closingLocal = startLocal.Date.AddHours(21); // business closes at 21:00 local
+        if (startLocal >= closingLocal) return 0;
+
+        var maxClosingHours = (int)((closingLocal - startLocal).TotalHours);
+        if (maxClosingHours <= 0) return 0;
+
+        // Find the next booking that starts after startUtc (because startUtc itself is free)
+        var nextBooking = _bookedSlots
+            .Where(slot => slot.StartTime > startUtc)
+            .OrderBy(slot => slot.StartTime)
+            .FirstOrDefault();
+
+        if (nextBooking != null)
+        {
+            var hoursToNextBooking = (int)((nextBooking.StartTime - startUtc).TotalHours);
+            return Math.Min(maxClosingHours, hoursToNextBooking);
+        }
+
+        return maxClosingHours;
+    }
+
+    // Check if the interval (UTC start + duration) overlaps any existing booking (UTC)
+    private bool IsIntervalFree(DateTime startUtc, int hours)
+    {
+        var endUtc = startUtc.AddHours(hours);
+        return !_bookedSlots.Any(slot =>
+            startUtc < slot.EndTime && endUtc > slot.StartTime);
+    }
+
+    // Checks if a time slot can be used as a start time (i.e., at least 1 hour is available).
+    private bool IsSlotAvailable(DateTime utcTime)
+    {
+        return IsIntervalFree(utcTime, 1);
+    }
+
+    // Confirm booking with chosen start and duration
     private async Task ConfirmBooking()
     {
-        if (!selectedTime.HasValue || !_makeupTableId.HasValue) return;
+        if (!selectedStartTimeUtc.HasValue || _makeupTable == null) return;
+
+        var start = selectedStartTimeUtc.Value;
+        var end = start.AddHours(selectedDuration);
+
+        // Double-check (though UI already disables button)
+        if (!IsIntervalFree(start, selectedDuration))
+        {
+            await JS.InvokeVoidAsync("alert", "Выбранное время уже занято");
+            return;
+        }
 
         var request = new CreateMakeupBookingRequest
         {
-            MakeupTableId = _makeupTableId.Value,
-            StartTime = selectedTime.Value,
-            EndTime = selectedTime.Value.AddHours(1) // assuming 1‑hour slots
+            MakeupTableId = _makeupTable.MakeupTableId,
+            StartTime = start,
+            EndTime = end
         };
 
-        try
+        var (success, result, error) = await MakeupBookingService.CreateMakeupBookingAsync(request);
+        if (!success || result == null || result.BookingId == Guid.Empty)
         {
-            var bookingResult = await MakeupBookingService.CreateMakeupBookingAsync(request);
-
-            if (bookingResult == null)
-            {
-                await JS.InvokeVoidAsync("alert", "Ошибка при создании брони");
-                return;
-            }
-
-            if (bookingResult.RequiresPayment)
-            {
-                var paymentResult = await MakeupBookingService.InitiateMakeupPaymentAsync(bookingResult.BookingId);
-                if (paymentResult != null)
-                {
-                    NavigationManager.NavigateTo(paymentResult.PaymentUrl, forceLoad: true);
-                }
-                else
-                {
-                    await JS.InvokeVoidAsync("alert", "Не удалось инициировать оплату");
-                }
-            }
-            else if (bookingResult.RequiresContactInfo)
-            {
-                // You might want to redirect to a contact info page instead of alert
-                await JS.InvokeVoidAsync("alert", bookingResult.Message ?? "Введите контактные данные");
-                // Optionally: NavigationManager.NavigateTo($"/makeup-booking/contact/{bookingResult.BookingId}");
-            }
-            else
-            {
-                await JS.InvokeVoidAsync("alert", "Бронь создана! " + (bookingResult.Message ?? ""));
-            }
+            await JS.InvokeVoidAsync("alert", $"Не удалось создать бронь: {error}");
+            return;
         }
-        catch (Exception ex)
-        {
-            await JS.InvokeVoidAsync("alert", "Ошибка: " + ex.Message);
-        }
+
+        NavigationManager.NavigateTo($"/makeup-booking/confirm/{result.BookingId}");
     }
-
-    void OnDateSelected(DateTime? date) { selectedDate = date; selectedTime = null; }
-    void OnTimeSelected(DateTime time) => selectedTime = time;
 
     void OnDateRender(DateRenderEventArgs args)
     {
@@ -252,20 +337,16 @@
     List<DateTime> GetTimeSlotsForDate(DateTime date)
     {
         var slots = new List<DateTime>();
-        var startTime = date.Date.AddHours(9);
-        var endTime = date.Date.AddHours(21);
-        while (startTime <= endTime)
+        var startTimeLocal = date.Date.AddHours(8);
+        var endTimeLocal = date.Date.AddHours(21);
+        while (startTimeLocal < endTimeLocal)
         {
-            slots.Add(startTime);
-            startTime = startTime.AddHours(1);
+            // Convert local slot to UTC
+            var utcSlot = DateTime.SpecifyKind(startTimeLocal, DateTimeKind.Local).ToUniversalTime();
+            slots.Add(utcSlot);
+            startTimeLocal = startTimeLocal.AddHours(1);
         }
         return slots;
-    }
-
-    bool IsTimeBooked(DateTime time)
-    {
-        // Replace with real check against _bookedSlots
-        return _bookedSlots.Contains(time);
     }
 
     private void GoBack() => NavigationManager.NavigateTo("/makeup-booking");

@@ -65,7 +65,7 @@
                             @foreach (var b in profile.Bookings)
                             {
                                 <li>
-                                    <span>@b.RoomName</span>
+                                    <span>@b.ResourceName</span>
                                     <span>@b.StartTime.ToShortDateString() — <strong style="color: #e0c070;">@b.TotalPrice ₽</strong></span>
                                 </li>
                             }

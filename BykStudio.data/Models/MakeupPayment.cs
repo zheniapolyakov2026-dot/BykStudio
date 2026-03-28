@@ -16,6 +16,8 @@ namespace BykStudio.data.Models
         public DateTime PaymentDate { get; set; } = DateTime.UtcNow;
         public string? TransactionId { get; set; }
         public bool IsSuccessful { get; set; }
+        [MaxLength(50)]
+        public string? PaymentMethod { get; set; } // e.g., "Credit Card", "Cash"
 
         [ForeignKey(nameof(MakeupBookingId))]
         public MakeUpBooking MakeupBooking { get; set; } = null!;

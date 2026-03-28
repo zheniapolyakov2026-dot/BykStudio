@@ -164,14 +164,14 @@ namespace BykStudio.API.Controllers
                     PhoneNumber = user.PhoneNumber,
                     Bookings = user.Bookings.Select(b => new BookingSummaryDto
                     {
-                        RoomName = b.Room?.Name,
+                        ResourceName = b.Room?.Name,
                         StartTime = b.StartTime,
                         EndTime = b.EndTime,
                         TotalPrice = b.TotalPrice
                     }).ToList(),
-                    MakeupBookings = user.MakeupBookings.Select(mb => new MakeupBookingSummaryDto
+                    MakeupBookings = user.MakeupBookings.Select(mb => new BookingSummaryDto
                     {
-                        MakeupTableName = mb.MakeupTable?.Name,
+                        ResourceName = mb.MakeupTable?.Name,
                         StartTime = mb.StartTime,
                         EndTime = mb.EndTime,
                         TotalPrice = mb.TotalPrice

@@ -11,24 +11,28 @@ namespace BykStudio.Web.Services
             _httpClient = httpClient;
         }
 
-        public async Task<MakeupBookingResult?> CreateMakeupBookingAsync(CreateMakeupBookingRequest request)
+        public async Task<(bool Success, MakeupBookingResult? Result, string? Error)> CreateMakeupBookingAsync(CreateMakeupBookingRequest request)
         {
             var response = await _httpClient.PostAsJsonAsync("api/makeupbookings", request);
             if (response.IsSuccessStatusCode)
             {
-                return await response.Content.ReadFromJsonAsync<MakeupBookingResult>();
+                var result = await response.Content.ReadFromJsonAsync<MakeupBookingResult>();
+                return (true, result, null);
             }
-            // Handle errors – you may want to throw or return null with error details
-            return null;
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                return (false, null, error);
+            }
         }
 
-        public async Task<MakeupPaymentResult?> InitiateMakeupPaymentAsync(Guid bookingId)
+        public async Task<PaymentInitiationResult?> InitiateMakeupPaymentAsync(Guid bookingId)
         {
             // Adjust this to match your actual payment initiation endpoint
             var response = await _httpClient.PostAsync($"api/makeupbookings/{bookingId}/initiate-payment", null);
             if (response.IsSuccessStatusCode)
             {
-                return await response.Content.ReadFromJsonAsync<MakeupPaymentResult>();
+                return await response.Content.ReadFromJsonAsync<PaymentInitiationResult>();
             }
             return null;
         }
@@ -38,6 +42,35 @@ namespace BykStudio.Web.Services
         {
             var response = await _httpClient.PostAsJsonAsync($"api/makeupbookings/{bookingId}/contact", request);
             return response.IsSuccessStatusCode;
+        }
+
+        public async Task<List<BookedSlotDto>> GetBookedSlotsAsync(DateTime start, DateTime end)
+        {
+            try
+            {
+                // Ensure UTC
+                start = start.ToUniversalTime();
+                end = end.ToUniversalTime();
+                var response = await _httpClient.GetFromJsonAsync<List<BookedSlotDto>>(
+                    $"api/makeupbookings/slots?start={start:O}&end={end:O}");
+                return response ?? new List<BookedSlotDto>();
+            }
+            catch
+            {
+                return new List<BookedSlotDto>();
+            }
+        }
+
+        public async Task<MakeupBookingConfirmationDto?> GetBookingConfirmationAsync(Guid id)
+        {
+            try
+            {
+                return await _httpClient.GetFromJsonAsync<MakeupBookingConfirmationDto>($"api/makeupbookings/{id}");
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }

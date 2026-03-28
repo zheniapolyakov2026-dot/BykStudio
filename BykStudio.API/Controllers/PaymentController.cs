@@ -107,7 +107,7 @@ namespace BykStudio.API.Controllers
             var description = $"Booking: {booking.Room?.Name} on {booking.StartTime:dd.MM.yyyy HH:mm}";
 
             var tinkoffResponse = await _tinkoffPaymentService.CreatePaymentAsync(
-                booking.TotalPrice,
+                (int)(booking.TotalPrice * 100),   // convert to kopecks
                 payment.PaymentId.ToString(),
                 description,
                 successUrl,

@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using BykStudio.data;
+using BykStudio.data.Interfaces;
 using BykStudio.data.DTOs;
 using BykStudio.data.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -12,16 +13,23 @@ namespace BykStudio.API.Controllers
     public class MakeupBookingsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly ITinkoffPaymentService _tinkoffPaymentService;
 
-        public MakeupBookingsController(ApplicationDbContext context)
+        public MakeupBookingsController(ApplicationDbContext context, ITinkoffPaymentService tinkoffPaymentService)
         {
             _context = context;
+            _tinkoffPaymentService = tinkoffPaymentService;
         }
 
         // POST: api/makeupbookings
         [HttpPost]
         public async Task<IActionResult> CreateBooking([FromBody] CreateMakeupBookingRequest request)
         {
+            if (request.StartTime.Kind != DateTimeKind.Utc)
+                request.StartTime = DateTime.SpecifyKind(request.StartTime, DateTimeKind.Utc);
+            if (request.EndTime.Kind != DateTimeKind.Utc)
+                request.EndTime = DateTime.SpecifyKind(request.EndTime, DateTimeKind.Utc);
+
             using var transaction = await _context.Database.BeginTransactionAsync();
 
             try
@@ -56,7 +64,7 @@ namespace BykStudio.API.Controllers
                 var booking = new MakeUpBooking
                 {
                     MakeupTableId = request.MakeupTableId,
-                    UserId = isGuest ? "guest-" + Guid.NewGuid().ToString() : userId,
+                    UserId = isGuest ? null : userId,
                     StartTime = request.StartTime,
                     EndTime = request.EndTime,
                     TotalPrice = totalPrice,
@@ -69,22 +77,13 @@ namespace BykStudio.API.Controllers
 
                 await transaction.CommitAsync();
 
-                if (isGuest)
+                return Ok(new MakeupBookingResult
                 {
-                    return Ok(new
-                    {
-                        booking.MakeupBookingId,
-                        TotalPrice = totalPrice,
-                        Message = "Пожалуйста, предоставьте информацию для завершения бронирования",
-                        RequiresContactInfo = true
-                    });
-                }
-
-                return Ok(new
-                {
-                    booking.MakeupBookingId,
+                    BookingId = booking.MakeupBookingId,
                     TotalPrice = totalPrice,
-                    RequiresPayment = true
+                    Message = isGuest ? "Пожалуйста, предоставьте информацию для завершения бронирования" : null,
+                    RequiresContactInfo = isGuest,
+                    RequiresPayment = !isGuest
                 });
             }
             catch
@@ -169,6 +168,74 @@ namespace BykStudio.API.Controllers
                     booking.Payment.IsSuccessful,
                     booking.Payment.PaymentDate
                 }
+            });
+        }
+
+        [HttpGet("slots")]
+        public async Task<IActionResult> GetBookedSlots([FromQuery] DateTime start, [FromQuery] DateTime end)
+        {
+            // Ensure UTC
+            start = start.ToUniversalTime();
+            end = end.ToUniversalTime();
+
+            var bookings = await _context.MakeupBookings
+                .Where(mb => mb.Status != BookingStatus.Cancelled &&
+                             mb.StartTime < end && mb.EndTime > start)
+                .Select(mb => new BookedSlotDto
+                {
+                    StartTime = mb.StartTime,
+                    EndTime = mb.EndTime
+                })
+                .ToListAsync();
+
+            return Ok(bookings);
+        }
+
+        [HttpPost("{id}/initiate-payment")]
+        public async Task<IActionResult> InitiateMakeupPayment(Guid id)
+        {
+            var booking = await _context.MakeupBookings
+                .Include(b => b.MakeupTable)
+                .FirstOrDefaultAsync(b => b.MakeupBookingId == id);
+
+            if (booking == null)
+                return NotFound();
+
+            if (booking.Status != BookingStatus.Pending)
+                return BadRequest("Booking cannot be paid");
+
+            // Create payment record (you'll need MakeupPayment entity – similar to Payment)
+            var payment = new MakeupPayment   // ← create this entity if missing
+            {
+                MakeupBookingId = booking.MakeupBookingId,
+                Amount = booking.TotalPrice,
+                PaymentMethod = "Tinkoff",
+                IsSuccessful = false
+            };
+
+            _context.MakeupPayments.Add(payment);  // ← add DbSet<MakeupPayment>
+            await _context.SaveChangesAsync();
+
+            var successUrl = $"{Request.Scheme}://{Request.Host}/makeup-booking/success?paymentId={payment.MakeupPaymentId}";
+            var failUrl = $"{Request.Scheme}://{Request.Host}/makeup-booking/fail?paymentId={payment.MakeupPaymentId}";
+
+            var description = $"Грим стол: {booking.MakeupTable?.Name} {booking.StartTime:dd.MM.yyyy HH:mm}";
+
+            var response = await _tinkoffPaymentService.CreatePaymentAsync(
+                (int)(booking.TotalPrice * 100),   // Tinkoff usually wants kopecks
+                payment.MakeupPaymentId.ToString(),
+                description,
+                successUrl,
+                failUrl
+            );
+
+            if (!response.Success)
+                return BadRequest(new { error = response.Message });
+
+            return Ok(new
+            {
+                PaymentId = payment.MakeupPaymentId,
+                PaymentUrl = response.PaymentURL
             });
         }
     }

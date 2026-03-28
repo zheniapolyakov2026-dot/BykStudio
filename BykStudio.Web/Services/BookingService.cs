@@ -19,11 +19,11 @@ namespace BykStudio.Web.Services
                    ?? throw new InvalidOperationException("Failed to create booking");
         }
 
-        public async Task<PaymentInitiateResponse> InitiatePaymentAsync(Guid bookingId)
+        public async Task<PaymentInitiationResult> InitiatePaymentAsync(Guid bookingId)
         {
             var response = await _httpClient.PostAsJsonAsync("api/Payment/initiate", new { BookingId = bookingId });
             response.EnsureSuccessStatusCode();
-            return await response.Content.ReadFromJsonAsync<PaymentInitiateResponse>()
+            return await response.Content.ReadFromJsonAsync<PaymentInitiationResult>()
                    ?? throw new InvalidOperationException("Failed to initiate payment");
         }
     }

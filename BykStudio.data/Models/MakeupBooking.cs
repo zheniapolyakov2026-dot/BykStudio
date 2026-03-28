@@ -9,7 +9,7 @@ namespace BykStudio.data.Models
         public Guid MakeupBookingId { get; set; } = Guid.NewGuid();
 
         // Foreign keys
-        public string UserId { get; set; } = string.Empty;
+        public string? UserId { get; set; } = string.Empty;
         public Guid MakeupTableId { get; set; }
 
         [Required]
