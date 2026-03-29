@@ -74,7 +74,6 @@ namespace BykStudio.data
                     Name = "Зал 1",
                     PricePerHour = 1000m,
                     Description = "Зал | \r\n\r\nЗал в стиле минимализм. \r\nВ ваше пользование будет предоставлено:\r\n- циклорама \r\n- проф.оборудование \r\n- флаги\r\n- 2-х метровый кожаный диван\r\n- бумажные фоны\r\n- тканевые фоны \r\n- кресло \r\n- 4 стула \r\n- черная кожаная банкетка   \r\n- зеркало\r\n- рейл\r\n в данном зале блэкаут шторы",
-                    Capacity = 10,
                     MainImageUrl = "/images/room7.jpg",
                     Photos = ["/images/room7.jpg", "/images/room7.jpg"],
                     IsAvailable = true
@@ -85,7 +84,6 @@ namespace BykStudio.data
                     Name = "Зал 2",
                     PricePerHour = 1500m,
                     Description = "Equipped with professional gear",
-                    Capacity = 15,
                     MainImageUrl = "/images/room7.jpg",
                     Photos = ["room7.jpg", "room7.jpg"],
                     IsAvailable = true

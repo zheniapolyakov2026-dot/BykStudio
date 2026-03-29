@@ -1,4 +1,5 @@
-﻿using BykStudio.data.Models;
+﻿using BykStudio.data.DTOs;
+using BykStudio.data.Models;
 
 namespace BykStudio.Web.Services
 {
@@ -42,6 +43,26 @@ namespace BykStudio.Web.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"Exception: {ex}");
+                return null;
+            }
+        }
+
+        public async Task<RoomDto?> GetRoomDtoByNameAsync(string name)
+        {
+            var rooms = await GetAllRoomDtosAsync();
+            return rooms?.FirstOrDefault(r =>
+                string.Equals(r.Name, name, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public async Task<List<RoomDto>?> GetAllRoomDtosAsync()
+        {
+            try
+            {
+                var response = await _httpClient.GetFromJsonAsync<List<RoomDto>>("api/rooms");
+                return response;
+            }
+            catch
+            {
                 return null;
             }
         }

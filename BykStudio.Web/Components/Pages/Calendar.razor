@@ -79,6 +79,12 @@
             border-color: #007bff;
         }
 
+        .time-slot.selected-interval {
+            background-color: #90ee90;
+            border-color: #2e8b57;
+            color: #2c3e50;
+        }
+
     h3 {
         margin-top: 0;
         margin-bottom: 20px;
@@ -113,7 +119,7 @@
                 Бронирование @RoomName
             </h1>
 
-            <!-- ВАШ ТОЧНЫЙ КАЛЕНДАРЬ (ничего не изменено) -->
+            <!-- календарь -->
             <div class="booking-wrapper">
                 <div class="calendar-section">
                     <h3>📅 Выберите день</h3>
@@ -131,26 +137,58 @@
                         <h3>⏰ Доступное время на @selectedDate.Value.ToString("dd MMMM", new CultureInfo("ru-RU"))</h3>
 
                         <div class="time-grid">
-                            @foreach (var time in GetTimeSlotsForDate(selectedDate.Value))
+                            @foreach (var utcTime in GetTimeSlotsForDate(selectedDate.Value))
                             {
-                                bool isBooked = IsTimeBooked(time);
-                                bool isPast = time < DateTime.Now;
-                                bool isSelected = selectedTime == time;
+                                var localTime = utcTime.ToLocalTime();
+                                bool isSlotAvailable = IsSlotAvailable(utcTime);
+                                bool isSelected = selectedStartTimeUtc == utcTime;
+                                bool isPast = utcTime < DateTime.UtcNow;
+                                bool isInSelectedInterval = selectedStartTimeUtc.HasValue &&
+                                                            utcTime >= selectedStartTimeUtc.Value &&
+                                                            utcTime < selectedStartTimeUtc.Value.AddHours(selectedDuration);
 
-                                <button class="time-slot @(isBooked ? "booked" : isPast ? "past" : isSelected ? "selected" : "")"
-                                        disabled="@(isBooked || isPast)"
-                                        @onclick="() => OnTimeSelected(time)">
-                                    @time.ToString("HH:mm")
+                                <button class="time-slot @(isSlotAvailable ? "" : "booked")
+                                                                @(isPast ? "past" : "")
+                                                                @(isSelected ? "selected" : "")
+                                                                @(isInSelectedInterval ? "selected-interval" : "")"
+                                        disabled="@(!isSlotAvailable || isPast)"
+                                        @onclick="() => OnTimeSelected(utcTime)">
+                                    @localTime.ToString("HH:mm")
                                 </button>
                             }
                         </div>
 
-                        @if (selectedTime.HasValue)
+                        @if (selectedStartTimeUtc.HasValue)
                         {
+                            var localStart = selectedStartTimeUtc.Value.ToLocalTime();
                             <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 8px;">
-                                <strong>Выбрано:</strong> @selectedTime.Value.ToString("dd MMMM в HH:mm", new CultureInfo("ru-RU"))
-                                <br />
-                                <RadzenButton Text="Подтвердить бронь" ButtonStyle="ButtonStyle.Primary" Class="mt-3" Click="@ConfirmBooking" />
+                                <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
+                                    <div>
+                                        <label>Продолжительность:</label>
+                                        <select @bind="selectedDuration">
+                                            @for (int i = 1; i <= MaxAvailableHours; i++)
+                                            {
+                                                <option value="@i">@i час@(i > 1 ? "а" : "")</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label>Количество человек:</label>
+                                        <input type="number" min="1" @bind="numberOfPeople" @oninput="OnPeopleChanged" />
+                                    </div>
+                                    <div>
+                                        <strong>Цена:</strong> @TotalPrice ₽
+                                    </div>
+                                </div>
+                                <div style="margin-top: 10px;">
+                                    <strong>Выбрано:</strong> @localStart.ToString("dd MMMM в HH:mm", new CultureInfo("ru-RU"))
+                                    (@selectedDuration часа, @numberOfPeople чел.)
+                                </div>
+                                <RadzenButton Text="Подтвердить бронь"
+                                              ButtonStyle="ButtonStyle.Primary"
+                                              Class="mt-3"
+                                              Click="@ConfirmBooking"
+                                              Disabled="@(!IsIntervalFree(selectedStartTimeUtc.Value, selectedDuration))" />
                             </div>
                         }
                     }
@@ -169,68 +207,148 @@
 @code {
     [Parameter] public string? RoomName { get; set; }
 
-    DateTime? selectedDate = DateTime.Today;
-    DateTime? selectedTime = null;
+    private RoomDto? _room;
+    private DateTime? selectedDate = DateTime.Today;
+    private DateTime? selectedStartTimeUtc = null;
+    private int selectedDuration = 1;
+    private int numberOfPeople = 1;
+    private List<BookedSlotDto> _bookedSlots = new();
 
-    private Guid? _roomId;
-
-    async Task ConfirmBooking()
+    // Computed total price (base price + extra fee per person over 2)
+    private decimal TotalPrice
     {
-        if (!selectedTime.HasValue || !_roomId.HasValue) return;
+        get
+        {
+            if (_room == null) return 0;
+            decimal basePrice = selectedDuration * _room.PricePerHour;
+            if (numberOfPeople > 6)
+                basePrice += (numberOfPeople - 6) * 200; // extra fee
+            return basePrice;
+        }
+    }
+
+    private int MaxAvailableHours => selectedStartTimeUtc.HasValue
+        ? GetMaxAvailableHours(selectedStartTimeUtc.Value)
+        : 1;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(RoomName))
+        {
+            _room = await RoomService.GetRoomDtoByNameAsync(RoomName);
+            if (_room == null)
+            {
+                NavigationManager.NavigateTo("/not-found");
+                return;
+            }
+            await LoadBookedSlotsForDate(selectedDate!.Value);
+        }
+    }
+
+    private async Task LoadBookedSlotsForDate(DateTime date)
+    {
+        var startUtc = date.Date.ToUniversalTime();
+        var endUtc = startUtc.AddDays(1);
+        _bookedSlots = await BookingService.GetBookedSlotsAsync(_room!.RoomId, startUtc, endUtc);
+    }
+
+    private async Task OnDateSelected(DateTime? date)
+    {
+        selectedDate = date;
+        selectedStartTimeUtc = null;
+        if (date.HasValue && _room != null)
+        {
+            await LoadBookedSlotsForDate(date.Value);
+            StateHasChanged();
+        }
+    }
+
+    private void OnTimeSelected(DateTime utcTime)
+    {
+        selectedStartTimeUtc = utcTime;
+        var maxAvailable = MaxAvailableHours;
+        if (selectedDuration > maxAvailable) selectedDuration = maxAvailable;
+        StateHasChanged();
+    }
+
+    private void OnPeopleChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var people))
+        {
+            numberOfPeople = Math.Max(people, 1);
+            StateHasChanged();
+        }
+    }
+
+    private int GetMaxAvailableHours(DateTime startUtc)
+    {
+        if (!IsSlotAvailable(startUtc)) return 0;
+
+        var startLocal = startUtc.ToLocalTime();
+        var closingLocal = startLocal.Date.AddHours(21); // business closes at 21:00 local
+        if (startLocal >= closingLocal) return 0;
+
+        var maxClosingHours = (int)((closingLocal - startLocal).TotalHours);
+        if (maxClosingHours <= 0) return 0;
+
+        var nextBooking = _bookedSlots
+            .Where(slot => slot.StartTime > startUtc)
+            .OrderBy(slot => slot.StartTime)
+            .FirstOrDefault();
+
+        if (nextBooking != null)
+        {
+            var hoursToNextBooking = (int)((nextBooking.StartTime - startUtc).TotalHours);
+            return Math.Min(maxClosingHours, hoursToNextBooking);
+        }
+
+        return maxClosingHours;
+    }
+
+    private bool IsIntervalFree(DateTime startUtc, int hours)
+    {
+        var endUtc = startUtc.AddHours(hours);
+        return !_bookedSlots.Any(slot =>
+            startUtc < slot.EndTime && endUtc > slot.StartTime);
+    }
+
+    private bool IsSlotAvailable(DateTime utcTime)
+    {
+        return IsIntervalFree(utcTime, 1);
+    }
+
+    private async Task ConfirmBooking()
+    {
+        if (!selectedStartTimeUtc.HasValue || _room == null) return;
+
+        var start = selectedStartTimeUtc.Value;
+        var end = start.AddHours(selectedDuration);
+
+        if (!IsIntervalFree(start, selectedDuration))
+        {
+            await JS.InvokeVoidAsync("alert", "Выбранное время уже занято");
+            return;
+        }
 
         var request = new CreateBookingRequest
         {
-            RoomId = _roomId.Value,
-            StartTime = selectedTime.Value,
-            EndTime = selectedTime.Value.AddHours(1),
-            NumberOfPeople = 1
+            RoomId = _room.RoomId,
+            StartTime = start,
+            EndTime = end,
+            NumberOfPeople = numberOfPeople
         };
 
         try
         {
             var bookingResult = await BookingService.CreateBookingAsync(request);
-
-            if (bookingResult.RequiresPayment)
-            {
-                var paymentResult = await BookingService.InitiatePaymentAsync(bookingResult.BookingId);
-                NavigationManager.NavigateTo(paymentResult.PaymentUrl, forceLoad: true); // redirect to Tinkoff
-            }
-            else if (bookingResult.RequiresContactInfo)
-            {
-                await JS.InvokeVoidAsync("alert", bookingResult.Message ?? "Введите контактные данные");
-            }
-            else
-            {
-                await JS.InvokeVoidAsync("alert", "Бронь создана! " + (bookingResult.Message ?? ""));
-            }
+            // Always go to confirmation page – both for guests and registered users
+            NavigationManager.NavigateTo($"/booking/confirm/{bookingResult.BookingId}");
         }
         catch (Exception ex)
         {
             await JS.InvokeVoidAsync("alert", "Ошибка: " + ex.Message);
         }
     }
-
-    protected override async Task OnParametersSetAsync()
-    {
-        // RoomName comes from the route, e.g. /calendar/room1
-        if (!string.IsNullOrEmpty(RoomName))
-        {
-            var room = await RoomService.GetRoomByNameAsync(RoomName);
-            if (room != null)
-            {
-                _roomId = room.RoomId;
-            }
-            else
-            {
-                // Room not found – redirect to a 404 page or show an error
-                NavigationManager.NavigateTo("/not-found");
-            }
-        }
-    }
-
-    // Keep all your original methods (OnDateSelected, OnTimeSelected, GetTimeSlotsForDate, IsTimeBooked, OnDateRender) unchanged
-    void OnDateSelected(DateTime? date) { selectedDate = date; selectedTime = null; }
-    void OnTimeSelected(DateTime time) => selectedTime = time;
 
     void OnDateRender(DateRenderEventArgs args)
     {
@@ -240,17 +358,16 @@
     List<DateTime> GetTimeSlotsForDate(DateTime date)
     {
         var slots = new List<DateTime>();
-        var startTime = date.Date.AddHours(9);
-        var endTime = date.Date.AddHours(21);
-        while (startTime <= endTime)
+        var startTimeLocal = date.Date.AddHours(8);
+        var endTimeLocal = date.Date.AddHours(21);
+        while (startTimeLocal < endTimeLocal) // exclude 21:00 start
         {
-            slots.Add(startTime);
-            startTime = startTime.AddHours(1);
+            var utcSlot = DateTime.SpecifyKind(startTimeLocal, DateTimeKind.Local).ToUniversalTime();
+            slots.Add(utcSlot);
+            startTimeLocal = startTimeLocal.AddHours(1);
         }
         return slots;
     }
-
-    bool IsTimeBooked(DateTime time) => false; // temporary — later we can fetch real booked slots
 
     private void GoBack() => NavigationManager.NavigateTo("/rooms");
 }

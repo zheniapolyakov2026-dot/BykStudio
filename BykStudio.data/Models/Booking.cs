@@ -18,6 +18,8 @@ namespace BykStudio.data.Models
         [Required]
         public DateTime EndTime { get; set; }
 
+        public int NumberOfPeople { get; set; }
+
         [Column(TypeName = "decimal(18,2)")]
         public decimal TotalPrice { get; set; }
 

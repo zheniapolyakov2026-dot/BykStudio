@@ -140,6 +140,7 @@
                             @foreach (var utcTime in GetTimeSlotsForDate(selectedDate.Value))
                             {
                                 var localTime = utcTime.ToLocalTime();   // show local time
+                                bool isPast = utcTime < DateTime.UtcNow;
                                 bool isStartTimeFree = IsSlotAvailable(utcTime);
                                 bool isSelected = selectedStartTimeUtc == utcTime;
                                 bool isInSelectedInterval = selectedStartTimeUtc.HasValue &&
@@ -147,9 +148,10 @@
                                                             utcTime < selectedStartTimeUtc.Value.AddHours(selectedDuration);
 
                                 <button class="time-slot @(isStartTimeFree ? "" : "booked")
+                                                        @(isPast ? "past" : "")
                                                         @(isSelected ? "selected" : "")
                                                         @(isInSelectedInterval ? "selected-interval" : "")"
-                                        disabled="@(!isStartTimeFree)"
+                                        disabled="@(!isStartTimeFree || isPast)"
                                         @onclick="() => OnTimeSelected(utcTime)">
                                     @localTime.ToString("HH:mm")
                                 </button>

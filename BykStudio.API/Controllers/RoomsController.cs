@@ -51,7 +51,6 @@ namespace BykStudio.API.Controllers
                         Name = r.Name,
                         PricePerHour = r.PricePerHour,
                         Description = r.Description,
-                        Capacity = r.Capacity,
                         MainImageUrl = r.MainImageUrl,
                         Photos = r.Photos,
                         IsAvailable = r.IsAvailable

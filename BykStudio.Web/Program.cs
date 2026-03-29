@@ -13,8 +13,13 @@ builder.Services.AddRadzenComponents();
 // API Integration
 builder.Services.AddHttpClient<BookingService>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"] ?? "http://localhost:5199/"); // ← CHANGE TO YOUR API PORT
-});
+    client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"] ?? "http://localhost:5199/");
+})
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+ {
+     UseProxy = false,
+     Proxy = null
+ });
 
 builder.Services.AddHttpClient<RoomService>(client =>
 {

@@ -16,8 +16,6 @@ namespace BykStudio.data.Models
         [Required]
         public decimal PricePerHour { get; set; }
 
-        public int Capacity { get; set; }
-
         public bool IsAvailable { get; set; } = true;
         public string MainImageUrl { get; set; } = string.Empty;
         public List<string> Photos { get; set; } = new List<string>();

@@ -50,30 +50,27 @@ namespace BykStudio.API.Controllers
                 decimal hours = (decimal)(request.EndTime - request.StartTime).TotalHours;
                 decimal basePrice = hours * room.PricePerHour;
 
-                // Apply per-person pricing
-                if (request.NumberOfPeople > room.Capacity)
-                    return BadRequest($"Room capacity is {room.Capacity} people");
-
                 decimal totalPrice = basePrice;
-                if (request.NumberOfPeople > 2)
+                if (request.NumberOfPeople > 6)
                 {
-                    totalPrice += (request.NumberOfPeople - 2) * 500; // example fee
+                    totalPrice += (request.NumberOfPeople - 6) * 200;
                 }
 
                 // 4. Get current user if logged in
                 string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 bool isGuest = string.IsNullOrEmpty(userId);
 
-                // 5. Create booking (without discount first)
+                // 5. Create booking
                 var booking = new Booking
                 {
                     RoomId = request.RoomId,
                     UserId = isGuest ? null : userId,
                     StartTime = request.StartTime,
                     EndTime = request.EndTime,
-                    TotalPrice = totalPrice, // will be adjusted if points redeemed
+                    TotalPrice = totalPrice,
                     Status = BookingStatus.Pending,
-                    IsGuestBooking = isGuest
+                    IsGuestBooking = isGuest,
+                    NumberOfPeople = request.NumberOfPeople
                 };
 
                 _context.Bookings.Add(booking);
@@ -157,8 +154,7 @@ namespace BykStudio.API.Controllers
                     r.RoomId,
                     r.Name,
                     r.Description,
-                    r.PricePerHour,
-                    r.Capacity
+                    r.PricePerHour
                 })
                 .ToListAsync();
 
@@ -201,6 +197,62 @@ namespace BykStudio.API.Controllers
                     booking.Payment.PaymentDate
                 }
             });
+        }
+
+        [HttpGet("{roomId}/slots")]
+        public async Task<IActionResult> GetBookedSlots(Guid roomId, [FromQuery] DateTime start, [FromQuery] DateTime end)
+        {
+            // Ensure UTC
+            start = start.ToUniversalTime();
+            end = end.ToUniversalTime();
+
+            var bookedSlots = await _context.Bookings
+                .Where(b => b.RoomId == roomId &&
+                            b.Status != BookingStatus.Cancelled &&
+                            b.StartTime < end && b.EndTime > start)
+                .Select(b => new BookedSlotDto
+                {
+                    StartTime = b.StartTime,
+                    EndTime = b.EndTime
+                })
+                .ToListAsync();
+
+            return Ok(bookedSlots);
+        }
+
+        [HttpGet("{id}/confirmation")]
+        public async Task<IActionResult> GetBookingConfirmation(Guid id)
+        {
+            var booking = await _context.Bookings
+                .Include(b => b.Room)
+                .Include(b => b.Payment)
+                .FirstOrDefaultAsync(b => b.BookingId == id);
+
+            if (booking == null)
+                return NotFound();
+
+            var dto = new BookingConfirmationDto
+            {
+                BookingId = booking.BookingId,
+                RoomName = booking.Room?.Name ?? string.Empty,
+                StartTime = booking.StartTime,
+                EndTime = booking.EndTime,
+                TotalPrice = booking.TotalPrice,
+                IsGuestBooking = booking.IsGuestBooking,
+                GuestName = booking.GuestName,
+                GuestEmail = booking.GuestEmail,
+                GuestPhone = booking.GuestPhone,
+                NumberOfPeople = booking.NumberOfPeople,   // make sure your Booking model has this property
+                Payment = booking.Payment == null ? null : new PaymentInfo
+                {
+                    PaymentId = booking.Payment.PaymentId,
+                    Amount = booking.Payment.Amount,
+                    IsSuccessful = booking.Payment.IsSuccessful,
+                    PaymentDate = booking.Payment.PaymentDate
+                }
+            };
+
+            return Ok(dto);
         }
     }
 }
